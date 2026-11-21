@@ -313,6 +313,31 @@ body[data-skin=standard] .np-play{background:linear-gradient(135deg,#4361ee,#7c9
 .ncm-pl em { color: #3a6bd6; flex: none; margin-left: auto; font-size: 10px; font-style: normal; }
 @media (max-width: 420px) { .ncm-pls { grid-template-columns: 1fr; } }
 
+/* ===== 搜索页：双列封面大卡片 ===== */
+.search-results .sr-sec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:6px}
+.search-results .row{flex-direction:column;align-items:stretch;gap:10px;background:#fff;border:1px solid #eceef3;border-radius:18px;padding:12px;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.search-results .row:hover{transform:translateY(-3px);border-color:#dfe6f3;box-shadow:0 14px 30px rgba(31,41,66,.10)}
+.search-results .row .idx,.search-results .row .dur{display:none}
+.search-results .row .cov{width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden}
+.search-results .row .cov img{width:100%;height:100%;object-fit:cover}
+.search-results .r-main{min-width:0;display:flex;flex-direction:column;gap:3px}
+.search-results .r-title{font-size:14px;color:#151a24}
+.search-results .r-sub{font-size:11.5px;color:#8a94a8}
+.search-results .r-right{margin-left:auto;flex-direction:row;gap:4px}
+@media (max-width:560px){.search-results .sr-sec{grid-template-columns:1fr}}
+
+/* ===== 3D 黑胶 + 浮动粒子 ===== */
+.np-artwrap{perspective:1200px}
+.np-art{transform-style:preserve-3d}
+body[data-skin=vinyl] .np-art{transform:rotateY(10deg) rotateX(5deg)}
+body[data-skin=vinyl] .art-vinyl{transform-style:preserve-3d;box-shadow:0 30px 70px rgba(0,0,0,.55),inset 0 0 30px #000}
+body[data-skin=vinyl] .atom{display:block}
+body[data-skin=vinyl] .orbit{position:absolute;border:1px solid rgba(255,255,255,.14);border-radius:50%;inset:16%;animation:fcSpin 16s linear infinite}
+body[data-skin=vinyl] .elec{width:6px;height:6px;border-radius:50%;background:#ffd28a;box-shadow:0 0 12px rgba(255,210,138,.6);animation:fcFloatUp 7s linear infinite}
+
+/* ===== 顶部：只显示音源，歌曲名留在底部条 ===== */
+.np-top .np-src{font-weight:600;letter-spacing:.04em}
+
 /* ---- 流畅度：降低毛玻璃与动画开销 ---- */
 .acct-mask { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .ncm-card, .qq-card, .acct-panel { -webkit-backdrop-filter: none; backdrop-filter: none; }
