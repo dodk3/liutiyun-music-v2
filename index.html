@@ -789,8 +789,9 @@ function loadLyric(s){
   S.lyrFor=s.src+':'+s.id;
   $('#lyr').innerHTML='<b>正在加载歌词…</b>';
   if(s.src==='qq'){
-    jsonp('https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?format=jsonp&songmid='+encodeURIComponent(s.id)+'&g_tk=5381&loginUin=0&hostUin=0&platform=yqq&needNewCode=0').then(function(d){
-      var txt=d&&(d.lyric||'');if(!txt)throw new Error('暂无歌词');
+    var qh={};if(qqBase()===QQ_DEFAULT)qh.Authorization='Bearer '+QQ_TOKEN;
+    fetchJSON(qqBase()+'/song/lyric?id='+encodeURIComponent(s.id),{headers:qh}).then(function(d){
+      var txt=(d&&d.lyric)||'';if(!txt)throw new Error('暂无歌词');
       txt=txt.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
       renderLyric(parseLRC(txt));
     }).catch(function(){renderLyric([])});
