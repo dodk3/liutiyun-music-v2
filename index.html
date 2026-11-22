@@ -11,7 +11,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif}
 body{overflow:hidden}
 #app{height:100%;display:flex;flex-direction:column}
-.top{padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px;transition:padding-top .3s ease}
+.top{padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
 body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 .brand{font-size:17px;font-weight:700;letter-spacing:.5px}
 .brand i{color:var(--acc);font-style:normal}
@@ -209,6 +209,17 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 .island.loading .ispin{display:block}
 .island.loading .ibars{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+
+@media (max-width:560px){
+  .island{backdrop-filter:blur(14px) saturate(145%);-webkit-backdrop-filter:blur(14px) saturate(145%);box-shadow:0 8px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.34)}
+  .island.playing{animation:none}
+  .island::after{display:none}
+  .island::before{animation-duration:7s;opacity:.5}
+  .np-blobs{filter:blur(28px) saturate(150%)}
+  .np-blobs i{opacity:.45}
+  .np-bg{filter:blur(34px) saturate(115%)}
+}
 
 </style>
 </head>
@@ -413,6 +424,7 @@ function setIslandLoading(on){
 }
 function islandShow(on){
   var el=$('#island');if(!el)return;
+  if(on&&$('#np').classList.contains('open'))on=false;
   el.classList.toggle('show',!!on);
   document.body.classList.toggle('island-on',!!on);
 }
@@ -563,17 +575,20 @@ function songURL(s){
     return {url:d.url,br:d.br||0};
   });
 }
+var PLAY_TOKEN=0;
 function playIndex(i){
   if(i<0)i=0;
   if(i>=S.queue.length)i=0;
   var s=S.queue[i];if(!s)return;
   S.idx=i;S.qpos=i;
+  var token=++PLAY_TOKEN;
   setIslandLoading(true);
   setIsland('正在加载…');
   islandShow(true);
   showPlaying(s);setIslandCover(s.cover);setupMediaSession(s);
   audio.pause();
   songURL(s).then(function(r){
+    if(token!==PLAY_TOKEN)return;
     var url=typeof r==='string'?r:r.url;
     S.br=(typeof r==='object'&&r.br)?r.br:0;
     audio.src=url;
@@ -584,6 +599,9 @@ function playIndex(i){
     saveRecent(s);
     renderBadges(s);
   }).catch(function(e){
+    if(token!==PLAY_TOKEN)return;
+    setIslandLoading(false);
+    setIsland(e.message||'播放失败');
     toast(e.message||'播放失败');
   });
 }
@@ -935,7 +953,6 @@ $('#mPrev').addEventListener('click',function(e){e.stopPropagation();prev()});
 $('#mNext').addEventListener('click',function(e){e.stopPropagation();next()});
 function toggle(){
   if(!audio.src){toast('先搜一首歌');return}
-  fxInit();
   if(audio.paused)audio.play().catch(function(){toast('播放被浏览器拦截了')});else audio.pause();
 }
 
@@ -1169,6 +1186,9 @@ setTimeout(function(){var sp=$('#splash');if(!sp)return;sp.classList.add('off');
     doSearch();
   });
 })();
+window.addEventListener('error',function(e){
+  try{toast('出错了：'+(e.message||'未知错误').slice(0,40))}catch(x){}
+});
 /* ---------- 启动 ---------- */
 $('#btnSearch').addEventListener('click',doSearch);
 $('#kw').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doSearch()}});
