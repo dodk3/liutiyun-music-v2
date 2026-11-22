@@ -676,7 +676,6 @@ function setupMediaSession(s){
   }catch(e){}
 }
 function showPlaying(s){
-  setls(LS.src,s.src);S.src=s.src;
   var art=$('#npArt');
   art.innerHTML=s.cover?'<img src="'+esc(s.cover)+'" alt="" onerror="this.parentNode.innerHTML=\'<div class=&quot;ph&quot;>'+esc((s.name||'F').slice(0,1))+'</div>\'">':'<div class="ph">'+esc((s.name||'F').slice(0,1))+'</div>';
   $('#npBg').style.backgroundImage=s.cover?'url("'+s.cover+'")':'';
@@ -793,8 +792,9 @@ function loadLyric(s){
     fetchJSON(qqBase()+'/song/lyric?id='+encodeURIComponent(s.id),{headers:qh}).then(function(d){
       var txt=(d&&d.lyric)||'';if(!txt)throw new Error('暂无歌词');
       txt=txt.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
-      renderLyric(parseLRC(txt));
-    }).catch(function(){renderLyric([])});
+      var ls2=parseLRC(txt);renderLyric(ls2);
+      if(!ls2.length)setIsland(s.name||'暂无歌词');
+    }).catch(function(){renderLyric([]);setIsland(s.name||'暂无歌词')});
   }else{
     var ck=ncmCk();
     withTimeout(fetchJSON(ncmBase()+'/lyric?id='+encodeURIComponent(s.id)+'&t='+Date.now()+(ck?'&cookie='+encodeURIComponent(ck):'')),12000,'歌词').then(function(j){
@@ -962,6 +962,7 @@ $('#mPrev').addEventListener('click',function(e){e.stopPropagation();prev()});
 $('#mNext').addEventListener('click',function(e){e.stopPropagation();next()});
 function toggle(){
   if(!audio.src){toast('先搜一首歌');return}
+  if(S.trial&&audio.currentTime>=(S.trialCap||60)-0.2){audio.currentTime=0}
   if(audio.paused)audio.play().catch(function(){toast('播放被浏览器拦截了')});else audio.pause();
 }
 
