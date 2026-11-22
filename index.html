@@ -161,6 +161,31 @@ body{overflow:hidden}
 .row .playtag{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.07);color:#cbd5e8}
 .row .playtag svg{width:12px;height:12px;fill:currentColor}
 
+
+/* 液态玻璃灵动岛（歌词） */
+.island{position:absolute;left:50%;top:calc(56px + env(safe-area-inset-top));transform:translate(-50%,0);z-index:8;display:flex;align-items:center;gap:9px;max-width:min(84%,420px);padding:9px 17px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.06));backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,.24);box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -8px 18px rgba(255,255,255,.05);transition:opacity .3s,transform .35s cubic-bezier(.22,.61,.36,1)}
+.np.p2 .island{opacity:0;transform:translate(-50%,-10px);pointer-events:none}
+.island::before{content:"";position:absolute;left:-40%;top:-60%;width:180%;height:180%;background:radial-gradient(circle at 30% 20%,rgba(140,175,255,.28),transparent 55%),radial-gradient(circle at 75% 80%,rgba(180,120,255,.24),transparent 55%);animation:liq 9s ease-in-out infinite;pointer-events:none}
+@keyframes liq{0%,100%{transform:translate3d(-6%,0,0) rotate(0deg)}50%{transform:translate3d(6%,4%,0) rotate(8deg)}}
+.island .dot{position:relative;width:7px;height:7px;border-radius:50%;background:#7fa7ff;box-shadow:0 0 10px rgba(127,167,255,.9);flex:none}
+.island .dot.playing{animation:beat 1.4s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(.85);opacity:.7}50%{transform:scale(1.15);opacity:1}}
+.island #islandTxt{position:relative;font-size:12.5px;line-height:1.4;color:rgba(255,255,255,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px;transition:opacity .18s,transform .18s}
+.island #islandTxt.swap{opacity:.35;transform:translateY(4px)}
+
+
+/* 播放页液体流动 */
+.np-blobs{position:absolute;inset:-14%;pointer-events:none;overflow:hidden;filter:blur(36px) saturate(180%)}
+.np-blobs i{position:absolute;display:block;width:56%;height:56%;border-radius:46% 54% 60% 40%/50% 44% 56% 50%;background-size:cover;background-position:center;opacity:.55;mix-blend-mode:screen;will-change:transform,border-radius}
+.np-blobs .f1{left:-6%;top:8%;animation:flow1 16s ease-in-out infinite}
+.np-blobs .f2{right:-10%;top:26%;animation:flow2 19s ease-in-out infinite;opacity:.46}
+.np-blobs .f3{left:18%;bottom:-8%;width:48%;height:48%;animation:flow3 21s ease-in-out infinite;opacity:.4}
+@keyframes flow1{0%,100%{transform:translate3d(0,0,0) scale(1) rotate(0deg);border-radius:46% 54% 60% 40%/50% 44% 56% 50%}50%{transform:translate3d(14%,-8%,0) scale(1.14) rotate(14deg);border-radius:60% 40% 44% 56%/56% 60% 40% 44%}}
+@keyframes flow2{0%,100%{transform:translate3d(0,0,0) scale(1.02) rotate(0deg)}50%{transform:translate3d(-16%,10%,0) scale(1.2) rotate(-12deg)}}
+@keyframes flow3{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(10%,-12%,0) scale(1.18)}}
+.island{border-color:rgba(255,255,255,.26);box-shadow:0 10px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.42),0 0 26px var(--glow,rgba(120,160,255,.25))}
+.island .dot{background:var(--c1,#7fa7ff)}
+
 </style>
 </head>
 <body>
@@ -210,7 +235,9 @@ body{overflow:hidden}
 
 <div class="np" id="np">
   <div class="np-bg" id="npBg"></div>
+  <div class="np-blobs" id="npBlobs"><i class="f1"></i><i class="f2"></i><i class="f3"></i></div>
   <div class="np-veil"></div>
+  <div class="island" id="island"><span class="dot" id="islandDot"></span><span id="islandTxt">准备好了就搜一首</span></div>
   <div class="np-pages">
     <div class="page">
       <div class="np-top">
@@ -298,8 +325,9 @@ var LS={
 var NCM_DEFAULT='https://zm.wwoyun.cn';
 var QQ_DEFAULT='https://ep-3z3makzwrcma1w15m8jrvgt0yt.ep.tianacloud.com';
 var QQ_TOKEN='tia_1onZvx3yzsDDXNZzVxJdfDSWWdMV86GrLjJkOfG8uiFk';
-var S={list:[],idx:-1,page:1,src:'netease',loading:false,tab:'lyr',cmtFor:'',lyr:[],lyrFor:''};
+var S={list:[],idx:-1,queue:[],qpos:-1,page:1,src:'netease',loading:false,tab:'lyr',cmtFor:'',lyr:[],lyrFor:''};
 
+function curSong(){return S.queue[S.qpos]||null}
 function ls(k,d){try{var v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}}
 function setls(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove('show')},2200)}
@@ -316,6 +344,16 @@ function fetchJSON(u,opt){
     return r.json();
   });
 }
+function fetchRetry(u,opt,ms,label,tries){
+  tries=tries||2;
+  var attempt=function(n){
+    return withTimeout(fetchJSON(u,opt),ms||20000,label).catch(function(e){
+      if(n>1)return attempt(n-1);
+      throw e;
+    });
+  };
+  return attempt(tries);
+}
 function withTimeout(p,ms,label){
   return new Promise(function(res,rej){
     var t=setTimeout(function(){rej(new Error((label||'请求')+'超时'))},ms||12000);
@@ -323,6 +361,16 @@ function withTimeout(p,ms,label){
   });
 }
 
+
+/* 灵动岛 */
+var isTxt=null,isDot=null;
+function setIsland(t){
+  if(!isTxt){isTxt=$('#islandTxt');isDot=$('#islandDot')}
+  if(!isTxt||isTxt.textContent===t)return;
+  isTxt.classList.add('swap');
+  setTimeout(function(){isTxt.textContent=t;isTxt.classList.remove('swap')},160);
+}
+function islandBeat(on){if(!isDot)isDot=$('#islandDot');if(isDot)isDot.classList.toggle('playing',!!on)}
 /* ---------- 搜索 ---------- */
 function searchNcm(kw){
   var ck=ncmCk();
@@ -379,7 +427,7 @@ function renderResults(list,kw){
 document.getElementById('rsMain').addEventListener('click',function(e){
   var row=e.target.closest('.row');if(!row)return;
   var i=parseInt(row.dataset.i,10);
-  if(S.list[i])playIndex(i);
+  if(S.list[i]){S.queue=S.list.slice();playIndex(i)}
 });
 
 /* ---------- 播放 ---------- */
@@ -388,24 +436,34 @@ function songURL(s){
   if(s.src==='qq'){
     var ck=qqCk();
     if(!ck)return Promise.reject(new Error('QQ音乐未登录，先在右上角 Q 登录'));
-    return withTimeout(fetchJSON(qqBase()+'/song/urls?id='+encodeURIComponent(s.id)+'&cookie='+encodeURIComponent(ck),{
+    return fetchRetry(qqBase()+'/song/urls?id='+encodeURIComponent(s.id)+'&cookie='+encodeURIComponent(ck),{
       headers:{Authorization:'Bearer '+QQ_TOKEN}
-    }),15000,'取流').then(function(j){
+    },22000,'取流',2).then(function(j){
       if(!j.playable)throw new Error(j.note||'这首歌当前不可播放');
       return j.url;
     });
   }
   var cookie=ncmCk();
   var u=ncmBase()+'/song/url?id='+encodeURIComponent(s.id)+'&br=320000&t='+Date.now()+(cookie?'&cookie='+encodeURIComponent(cookie):'');
-  return withTimeout(fetchJSON(u),15000,'取流').then(function(j){
+  return fetchRetry(u,null,22000,'取流',2).then(function(j){
     var d=(j.data||[])[0];
-    if(!d||!d.url)throw new Error(cookie?'这首歌没有可播放地址，试试其他歌曲':'这首歌需要登录，先在右上角 云 登录');
+    if(!d||!d.url){
+      if(!cookie)throw new Error('这首歌需要登录，先在右上角 云 登录');
+      return fetchRetry(ncmBase()+'/song/url?id='+encodeURIComponent(s.id)+'&br=128000&t='+Date.now()+'&cookie='+encodeURIComponent(cookie),null,22000,'取流',1).then(function(j2){
+        var d2=(j2.data||[])[0];
+        if(!d2||!d2.url)throw new Error('这首歌没有可播放地址（可能是版权/VIP 限制）');
+        return {url:d2.url,br:d2.br||0};
+      });
+    }
     return {url:d.url,br:d.br||0};
   });
 }
 function playIndex(i){
-  var s=S.list[i];if(!s)return;
-  S.idx=i;
+  if(i<0)i=0;
+  if(i>=S.queue.length)i=0;
+  var s=S.queue[i];if(!s)return;
+  S.idx=i;S.qpos=i;
+  setIsland('歌词加载中…');
   showPlaying(s);
   audio.pause();
   songURL(s).then(function(r){
@@ -444,15 +502,47 @@ $('#rsRecent').addEventListener('click',function(e){
   var row=e.target.closest('[data-r]');if(!row)return;
   var r=[];try{r=JSON.parse(ls(LS.recent,'[]'))}catch(x){r=[]}
   var s=r[parseInt(row.dataset.r,10)];if(!s)return;
-  S.list=[s];S.idx=0;
-  showPlaying(s);
+  var pos=-1;
+  for(var k=0;k<S.queue.length;k++){if(S.queue[k].id===s.id&&S.queue[k].src===s.src){pos=k;break}}
+  if(pos<0){S.queue=r.slice();pos=parseInt(row.dataset.r,10)}
+  playIndex(pos);
   songURL(s).then(function(v){audio.src=typeof v==='string'?v:v.url;audio.play();updatePlayIcon();loadLyric(s);loadComments(s,false);renderBadges(s)}).catch(function(er){toast(er.message)});
 });
+
+function tintFrom(url){
+  var np=$('#np');
+  if(!url){np.style.setProperty('--c1','#7fa7ff');np.style.setProperty('--glow','rgba(120,160,255,.25)');return}
+  var img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=function(){
+    try{
+      var c=document.createElement('canvas');c.width=16;c.height=16;
+      var x=c.getContext('2d');x.drawImage(img,0,0,16,16);
+      var d=x.getImageData(0,0,16,16).data,r=0,g=0,b=0,n=0;
+      for(var i=0;i<d.length;i+=4){
+        var R=d[i],G=d[i+1],B=d[i+2],mx=Math.max(R,G,B),mn=Math.min(R,G,B);
+        if(mx<30||mn>235||mx-mn<10)continue;
+        r+=R;g+=G;b+=B;n++;
+      }
+      if(!n)return;
+      r=Math.round(r/n);g=Math.round(g/n);b=Math.round(b/n);
+      var lift=function(v){return Math.min(255,Math.round(v*1.15+18))};
+      r=lift(r);g=lift(g);b=lift(b);
+      np.style.setProperty('--c1','rgb('+r+','+g+','+b+')');
+      np.style.setProperty('--glow','rgba('+r+','+g+','+b+',.28)');
+    }catch(e){}
+  };
+  img.onerror=function(){};
+  img.src=url;
+}
 function showPlaying(s){
   setls(LS.src,s.src);S.src=s.src;
   var art=$('#npArt');
   art.innerHTML=s.cover?'<img src="'+esc(s.cover)+'" alt="" onerror="this.parentNode.innerHTML=\'<div class=&quot;ph&quot;>'+esc((s.name||'F').slice(0,1))+'</div>\'">':'<div class="ph">'+esc((s.name||'F').slice(0,1))+'</div>';
   $('#npBg').style.backgroundImage=s.cover?'url("'+s.cover+'")':'';
+  var blobs=document.querySelectorAll('#npBlobs i');
+  for(var bi=0;bi<blobs.length;bi++)blobs[bi].style.backgroundImage=s.cover?'url("'+s.cover+'")':'';
+  tintFrom(s.cover);
   $('#npTitle').textContent=s.name||'';
   $('#npArtist').textContent=(s.artist||'')+(s.album?' · '+s.album:'');
   $('#npSrc').textContent=s.src==='qq'?'QQ 音乐':'网易云';
@@ -484,7 +574,9 @@ function updatePlayIcon(){
 }
 audio.addEventListener('play',updatePlayIcon);
 audio.addEventListener('pause',updatePlayIcon);
-audio.addEventListener('ended',function(){if(S.idx>=0&&S.idx+1<S.list.length)playIndex(S.idx+1);else updatePlayIcon()});
+audio.addEventListener('play',function(){islandBeat(true)});
+audio.addEventListener('pause',function(){islandBeat(false)});
+audio.addEventListener('ended',function(){if(S.queue.length){playIndex((S.qpos+1)%S.queue.length)}else updatePlayIcon()});
 audio.addEventListener('timeupdate',function(){
   if(!audio.duration)return;
   var p=audio.currentTime/audio.duration*100;
@@ -565,6 +657,7 @@ function parseLRC(txt){
 }
 function renderLyric(lines){
   S.lyr=lines;S.lyrIdx=-1;
+  setIsland(lines.length?lines[0].s:'暂无歌词');
   if(!lines.length){$('#lyr').innerHTML='<b>暂无歌词</b>';return}
   $('#lyr').innerHTML=lines.map(function(l,i){return '<b data-i="'+i+'">'+esc(l.s)+'</b>'}).join('');
 }
@@ -573,6 +666,7 @@ function syncLyric(t){
   var i=-1;for(var k=0;k<lines.length;k++){if(lines[k].t<=t+0.15)i=k;else break}
   if(i<0||i===S.lyrIdx)return;
   S.lyrIdx=i;
+  setIsland(lines[i].s);
   var els=$('#lyr').children;
   for(var j=0;j<els.length;j++)els[j].classList.toggle('on',j===i);
   var el=els[i];if(el&&$('#tabLyr').classList.contains('on')){
@@ -622,7 +716,7 @@ function switchTab(t){
   $('#lyr').style.display=t==='lyr'?'':'none';
   $('#cmt').style.display=t==='cmt'?'':'none';
   $('#cmt').hidden=false;
-  if(t==='cmt'&&S.list[S.idx])loadComments(S.list[S.idx],false);
+  var cs=curSong();if(t==='cmt'&&cs)loadComments(cs,false);
 }
 $('#npHint').addEventListener('click',function(){S.page=2;$('#np').classList.add('p2')});
 $('#tabLyr').addEventListener('click',function(){switchTab('lyr')});
@@ -653,8 +747,14 @@ function toggle(){
   if(!audio.src){toast('先搜一首歌');return}
   if(audio.paused)audio.play().catch(function(){toast('播放被浏览器拦截了')});else audio.pause();
 }
-function prev(){if(S.idx>0)playIndex(S.idx-1);else toast('已经是第一首')}
-function next(){if(S.idx>=0&&S.idx+1<S.list.length)playIndex(S.idx+1);else toast('已经是最后一首')}
+function prev(){
+  if(!S.queue.length){toast('先搜一首歌');return}
+  if(S.qpos<=0){playIndex(S.queue.length-1);toast('已循环到最后一首')}else playIndex(S.qpos-1);
+}
+function next(){
+  if(!S.queue.length){toast('先搜一首歌');return}
+  if(S.qpos>=S.queue.length-1){playIndex(0);toast('已循环到第一首')}else playIndex(S.qpos+1);
+}
 
 /* 左右滑动切页 */
 (function(){
