@@ -568,10 +568,10 @@ function songURL(s){
       return fetchRetry(ncmBase()+'/song/url?id='+encodeURIComponent(s.id)+'&br=128000&t='+Date.now()+'&cookie='+encodeURIComponent(cookie),null,22000,'取流',1).then(function(j2){
         var d2=(j2.data||[])[0];
         if(!d2||!d2.url)throw new Error('这首歌没有可播放地址（可能是版权/VIP 限制）');
-        return {url:d2.url,br:d2.br||0};
+        return {url:(d2.url||'').replace(/^http:/,'https:'),br:d2.br||0};
       });
     }
-    return {url:d.url,br:d.br||0};
+    return {url:(d.url||'').replace(/^http:/,'https:'),br:d.br||0};
   });
 }
 var PLAY_TOKEN=0;
