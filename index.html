@@ -330,8 +330,8 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
       </div>
     </div>
   </div>
-  <audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
 </div>
+<audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
 
 <div class="modal" id="modal">
   <div class="card">
@@ -580,6 +580,7 @@ function playIndex(i){
   if(i>=S.queue.length)i=0;
   var s=S.queue[i];if(!s)return;
   S.idx=i;S.qpos=i;
+  S.br=0;S.trial=false;S.lyrIdx=-1;
   var token=++PLAY_TOKEN;
   setIslandLoading(true);
   setIsland('正在加载…');
@@ -632,7 +633,6 @@ $('#rsRecent').addEventListener('click',function(e){
   for(var k=0;k<S.queue.length;k++){if(S.queue[k].id===s.id&&S.queue[k].src===s.src){pos=k;break}}
   if(pos<0){S.queue=r.slice();pos=parseInt(row.dataset.r,10)}
   playIndex(pos);
-  songURL(s).then(function(v){S.trial=!!(v&&v.trial);S.trialCap=(v&&v.cap)||60;audio.src=typeof v==='string'?v:v.url;audio.play();updatePlayIcon();loadLyric(s);loadComments(s,false);renderBadges(s)}).catch(function(er){toast(er.message)});
 });
 
 function tintFrom(url){
@@ -752,7 +752,11 @@ function setSeek(p){
     var r=seek.getBoundingClientRect();
     var x=(e.touches?e.touches[0].clientX:e.clientX);
     var p=Math.max(0,Math.min(1,(x-r.left)/r.width));
-    if(audio.duration){audio.currentTime=p*audio.duration;setSeek(p*100)}
+    if(audio.duration){
+      var t=p*audio.duration;
+      if(S.trial&&t>(S.trialCap||60))t=(S.trialCap||60);
+      audio.currentTime=t;setSeek(t/audio.duration*100);
+    }
   }
   seek.addEventListener('pointerdown',function(e){e.preventDefault();drag=true;pick(e);try{seek.setPointerCapture(e.pointerId)}catch(x){}});
   seek.addEventListener('pointermove',function(e){if(drag)pick(e)});
@@ -838,7 +842,7 @@ function loadComments(s,force){
   box.innerHTML='<div class="cmt-head">评论加载中…</div>';
   $('#cmtCount').textContent='';
   if(s.src==='qq'){
-    withTimeout(fetchJSON(qqBase()+'/song/comments?id='+encodeURIComponent(s.id),{headers:{Authorization:'Bearer '+QQ_TOKEN}}),15000,'评论').then(function(j){
+    withTimeout(fetchJSON(qqBase()+'/song/comments?id='+encodeURIComponent(s.id),{headers:(qqBase()===QQ_DEFAULT?{Authorization:'Bearer '+QQ_TOKEN}:{})}),15000,'评论').then(function(j){
       var list=(j.comments||[]).map(function(c){return {name:c.nick,text:c.content,time:(c.time||0)*1000,like:c.praise||0,avatar:c.avatar}});
       renderComments(list,j.total||list.length,'QQ 音乐评论');
     }).catch(function(){box.innerHTML='<div class="cmt-head">这首歌暂时拉不到 QQ 评论</div>'});
@@ -851,6 +855,15 @@ function loadComments(s,force){
     }).catch(function(){box.innerHTML='<div class="cmt-head">这首歌暂时拉不到网易云评论</div>'});
   }
 }
+$('#lyr').addEventListener('click',function(e){
+  var b=e.target.closest('b[data-i]');if(!b)return;
+  var i=parseInt(b.getAttribute('data-i'),10),l=S.lyr[i];if(!l)return;
+  if(audio.duration){
+    var t=l.t;if(S.trial&&t>(S.trialCap||60)){toast('试听只有前 1 分钟，这句听不到');return}
+    audio.currentTime=t;setSeek(t/audio.duration*100);$('#tNow').textContent=fmt(t);
+    if(audio.paused)audio.play().catch(function(){});
+  }
+});
 function renderComments(list,total,label){
   var box=$('#cmt');
   if(!list.length){box.innerHTML='<div class="cmt-head">'+esc(label)+'</div><div class="cmt-head">还没有评论</div>';return}
