@@ -191,6 +191,15 @@ body{overflow:hidden}
 .island{border-color:rgba(255,255,255,.26);box-shadow:0 10px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.42),0 0 26px var(--glow,rgba(120,160,255,.25))}
 .island .dot{background:var(--c1,#7fa7ff)}
 
+
+.who{font-size:11px;color:#8b93a5;max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pls{display:flex;gap:10px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
+.pls::-webkit-scrollbar{display:none}
+.pl{width:100px;flex:none;cursor:pointer}
+.pl img,.pl .ph{width:100px;height:100px;border-radius:14px;object-fit:cover;display:block;background:#1b1f29}
+.pl b{display:block;margin-top:7px;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl small{display:block;margin-top:2px;font-size:10px;color:#6d7688}
+
 </style>
 </head>
 <body>
@@ -204,7 +213,7 @@ body{overflow:hidden}
 </div>
 <div id="app">
   <div class="top">
-    <div class="brand">流体云<i>·</i>音乐</div>
+    <div class="brand">流体云<i>·</i>音乐</div><div class="who" id="who"></div>
     <div class="grow"></div>
     <button class="iconbtn" id="btnNcm" title="网易云登录">云</button>
     <button class="iconbtn" id="btnQq" title="QQ音乐登录">Q</button>
@@ -226,6 +235,7 @@ body{overflow:hidden}
         <button class="chip" data-k="陈奕迅">陈奕迅</button>
       </div>
     </div>
+    <div id="rsPl"></div>
     <div id="rsRecent"></div>
     <div id="rsMain"><div class="empty">搜一首歌开始<br><span style="font-size:11px;color:#5b6375">支持网易云音乐与 QQ 音乐</span></div></div>
   </div>
@@ -441,6 +451,49 @@ document.getElementById('rsMain').addEventListener('click',function(e){
   if(S.list[i]){S.queue=S.list.slice();playIndex(i)}
 });
 
+
+/* ---------- 我的歌单 ---------- */
+function ncmQ(extra){var ck=ncmCk();return ncmBase()+extra+(extra.indexOf('?')>-1?'&':'?')+'t='+Date.now()+(ck?'&cookie='+encodeURIComponent(ck):'')}
+function loadMyPlaylists(){
+  var box=$('#rsPl');
+  if(!ncmCk()){box.innerHTML='';$('#who').textContent='';return}
+  withTimeout(fetchJSON(ncmQ('/user/account'),{cache:'no-store'}),12000,'账号').then(function(j){
+    var pf=j.profile;
+    if(!pf)throw new Error('账号未登录');
+    $('#who').textContent=pf.nickname||'已登录';
+    return withTimeout(fetchJSON(ncmQ('/user/playlist?uid='+encodeURIComponent(pf.userId)+'&limit=12'),{cache:'no-store'}),14000,'歌单');
+  }).then(function(j){
+    var list=(j.playlist||[]).filter(function(p){return p&&p.id});
+    if(!list.length){box.innerHTML='';return}
+    var h='<div class="sect">我的歌单</div><div class="pls">';
+    list.forEach(function(p){
+      var cov=p.coverImgUrl||(p.cover&&p.cover.img1v1Url)||'';
+      h+='<div class="pl" data-pl="'+p.id+'" data-pn="'+esc(p.name)+'">'+
+         (cov?'<img src="'+esc(cov)+'" alt="">':'<div class="ph"></div>')+
+         '<b>'+esc(p.name)+'</b><small>'+(p.trackCount||0)+' 首</small></div>';
+    });
+    h+='</div>';
+    box.innerHTML=h;
+  }).catch(function(e){
+    $('#who').textContent='';
+    box.innerHTML='';
+  });
+}
+$('#rsPl').addEventListener('click',function(e){
+  var el=e.target.closest('[data-pl]');if(!el)return;
+  var id=el.getAttribute('data-pl'),nm=el.getAttribute('data-pn');
+  toast('正在载入「'+nm+'」');
+  withTimeout(fetchJSON(ncmQ('/playlist/track/all?id='+encodeURIComponent(id)+'&limit=300'),{cache:'no-store'}),18000,'歌单').then(function(j){
+    var songs=(j.songs||[]).map(function(x){
+      var ar=(x.ar||[]).map(function(a){return a.name}).join(' / ');
+      return {id:String(x.id),src:'netease',name:x.name,artist:ar,album:(x.al&&x.al.name)||'',cover:(x.al&&x.al.picUrl)||'',dur:(x.dt||0)/1000};
+    });
+    if(!songs.length){toast('这个歌单是空的');return}
+    S.list=songs;S.queue=songs.slice();
+    renderResults(songs,nm);
+    $('#scroll').scrollTop=0;
+  }).catch(function(e){toast(e.message||'歌单载入失败')});
+});
 /* ---------- 播放 ---------- */
 var audio=$('#audio');
 function songURL(s){
@@ -840,7 +893,7 @@ $('#btnQq').addEventListener('click',function(){openLogin('qq')});
 $('#mRefresh').addEventListener('click',function(){if(LOGIN.src==='qq')qqGen();else ncmGen()});
 $('#mOut').addEventListener('click',function(){
   if(LOGIN.src==='qq'){setls(LS.qqCk,'');toast('已退出 QQ音乐')}else{setls(LS.ncmCk,'');toast('已退出网易云')}
-  closeLogin();markLogin();
+  closeLogin();markLogin();loadMyPlaylists();
 });
 $('#cfgSave').addEventListener('click',function(){
   var v=($('#cfgInput').value||'').trim();
@@ -898,7 +951,7 @@ function pollNcm(){
         if(!ck){$('#mStatus').textContent='登录成功但没拿到授权，重新扫码';return}
         setls(LS.ncmCk,ck.trim());
         $('#mStatus').textContent='网易云登录成功';
-        markLogin();toast('网易云登录成功');
+        markLogin();toast('网易云登录成功');loadMyPlaylists();
         setTimeout(closeLogin,1200);
       }
     }).catch(function(){LOGIN.busy=false;$('#mStatus').textContent='接口没响应，稍后重试'});
@@ -979,6 +1032,7 @@ $('#kw').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDef
 document.addEventListener('fc:noop',function(){});
 renderRecent();
 markLogin();
+loadMyPlaylists();
 (function(){
   var s=ls(LS.src,'netease');
   S.src=s==='qq'?'qq':'netease';
