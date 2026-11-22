@@ -200,6 +200,15 @@ body{overflow:hidden}
 .pl b{display:block;margin-top:7px;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl small{display:block;margin-top:2px;font-size:10px;color:#6d7688}
 
+
+/* 音效小面板 */
+.fxbtn{font-size:10px;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#dfe5ef;cursor:pointer;line-height:1.2}
+.fxbtn.on{background:rgba(91,140,255,.24);border-color:rgba(91,140,255,.55);color:#fff}
+.fxpanel{position:absolute;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));transform:translate(-50%,8px);display:flex;gap:7px;padding:7px 9px;border-radius:15px;background:rgba(18,20,28,.94);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 30px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s,transform .22s;z-index:10}
+.fxpanel.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.fxpanel b{font-size:10px;font-weight:600;padding:6px 11px;border-radius:999px;color:#9aa3b5;background:rgba(255,255,255,.06);cursor:pointer;white-space:nowrap}
+.fxpanel b.on{background:#fff;color:#111}
+
 </style>
 </head>
 <body>
@@ -257,6 +266,7 @@ body{overflow:hidden}
     <div class="page">
       <div class="np-top">
         <span class="pill" id="npSrc">网易云</span>
+        <button class="fxbtn" id="fxBtn">音效</button>
         <span class="grow"></span>
         <button class="chev" id="npClose">⌄</button>
       </div>
@@ -266,6 +276,9 @@ body{overflow:hidden}
         <p id="npArtist">-</p>
         <div class="badges" id="npBadges"></div>
         <div class="hint" id="npHint">左滑看歌词与评论</div>
+      </div>
+      <div class="fxpanel" id="fxPanel">
+        <b data-fx="off">原声</b><b data-fx="vocal">人声</b><b data-fx="bass">低音</b><b data-fx="wide">环绕</b>
       </div>
       <div class="foot">
         <div class="seek" id="seek"><div class="bar"><div class="fill" id="seekFill"></div><div class="knob" id="seekKnob"></div></div></div>
@@ -305,7 +318,7 @@ body{overflow:hidden}
       </div>
     </div>
   </div>
-  <audio id="audio" preload="metadata"></audio>
+  <audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
 </div>
 
 <div class="modal" id="modal">
@@ -786,6 +799,51 @@ function renderComments(list,total,label){
   $('#cmtCount').textContent=total>9999?Math.round(total/10000)+'万':String(total);
 }
 
+
+/* ---------- 音效（WebAudio EQ） ---------- */
+var FX={ctx:null,src:null,low:null,mid:null,high:null,gain:null,mode:ls('fc2_fx','off')};
+function fxInit(){
+  if(FX.ctx)return true;
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return false;
+    FX.ctx=new AC();
+    FX.src=FX.ctx.createMediaElementSource(audio);
+    FX.low=FX.ctx.createBiquadFilter();FX.low.type='lowshelf';FX.low.frequency.value=140;
+    FX.mid=FX.ctx.createBiquadFilter();FX.mid.type='peaking';FX.mid.frequency.value=1800;FX.mid.Q.value=0.9;
+    FX.high=FX.ctx.createBiquadFilter();FX.high.type='highshelf';FX.high.frequency.value=6200;
+    FX.gain=FX.ctx.createGain();FX.gain.gain.value=1;
+    FX.src.connect(FX.low);FX.low.connect(FX.mid);FX.mid.connect(FX.high);FX.high.connect(FX.gain);FX.gain.connect(FX.ctx.destination);
+    fxApply(FX.mode);
+    return true;
+  }catch(e){return false}
+}
+function fxApply(mode){
+  FX.mode=mode;setls('fc2_fx',mode);
+  var map={
+    off:{l:0,m:0,h:0,g:1},
+    vocal:{l:-3,m:5,h:3,g:1},
+    bass:{l:9,m:-2,h:0,g:1},
+    wide:{l:2,m:2,h:5,g:.97}
+  }[mode]||{l:0,m:0,h:0,g:1};
+  if(FX.low){FX.low.gain.value=map.l;FX.mid.gain.value=map.m;FX.high.gain.value=map.h;FX.gain.gain.value=map.g}
+  var el=$('#fxBtn');
+  if(el){el.classList.toggle('on',mode!=='off');el.textContent=mode==='off'?'音效':({vocal:'人声',bass:'低音',wide:'环绕'}[mode]||'音效')}
+  var chips=document.querySelectorAll('#fxPanel b');
+  for(var i=0;i<chips.length;i++)chips[i].classList.toggle('on',chips[i].getAttribute('data-fx')===mode);
+}
+$('#fxBtn').addEventListener('click',function(e){
+  e.stopPropagation();
+  var p=$('#fxPanel');p.classList.toggle('show');
+  if(p.classList.contains('show'))fxInit();
+});
+$('#fxPanel').addEventListener('click',function(e){
+  var b=e.target.closest('[data-fx]');if(!b)return;
+  if(!fxInit()){toast('当前浏览器不支持音效');return}
+  if(FX.ctx&&FX.ctx.state==='suspended')FX.ctx.resume();
+  fxApply(b.getAttribute('data-fx'));
+  $('#fxPanel').classList.remove('show');
+});
 /* ---------- 交互 ---------- */
 function switchTab(t){
   S.tab=t;
@@ -798,6 +856,12 @@ function switchTab(t){
 }
 $('#npHint').addEventListener('click',function(){S.page=2;$('#np').classList.add('p2')});
 $('#tabLyr').addEventListener('click',function(){switchTab('lyr')});
+document.querySelectorAll('.sheet-top').forEach(function(el){
+  el.addEventListener('click',function(e){
+    if(e.target.closest('.chev'))return;
+    S.page=1;$('#np').classList.remove('p2');
+  });
+});
 $('#tabCmt').addEventListener('click',function(){switchTab('cmt')});
 
 function closeNP(){
@@ -824,6 +888,7 @@ $('#mPrev').addEventListener('click',function(e){e.stopPropagation();prev()});
 $('#mNext').addEventListener('click',function(e){e.stopPropagation();next()});
 function toggle(){
   if(!audio.src){toast('先搜一首歌');return}
+  fxInit();
   if(audio.paused)audio.play().catch(function(){toast('播放被浏览器拦截了')});else audio.pause();
 }
 function prev(){
@@ -837,16 +902,18 @@ function next(){
 
 /* 左右滑动切页 */
 (function(){
-  var np=$('#np'),x0=0,y0=0,t0=0,active=false;
+  var np=$('#np'),x0=0,y0=0,t0=0,active=false,fromBody=false;
   np.addEventListener('touchstart',function(e){
     if(e.touches.length!==1)return;
     x0=e.touches[0].clientX;y0=e.touches[0].clientY;t0=Date.now();
-    active=!e.target.closest('.seek,.vol-track,.body');
+    fromBody=!!e.target.closest('.body');
+    active=!e.target.closest('.seek,.vol-track,.tabs');
   },{passive:true});
   np.addEventListener('touchend',function(e){
     if(!active)return;
     var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
     if(Date.now()-t0>600)return;
+    if(fromBody&&(Math.abs(dy)>60||Math.abs(dx)<80))return;
     if(Math.abs(dx)<52||Math.abs(dx)<Math.abs(dy)*1.5)return;
     if(dx<0&&S.page===1){S.page=2;$('#np').classList.add('p2')}
     else if(dx>0&&S.page===2){S.page=1;$('#np').classList.remove('p2')}
@@ -856,7 +923,13 @@ function next(){
     if(e.deltaX>0&&S.page===1){S.page=2;$('#np').classList.add('p2')}
     else if(e.deltaX<0&&S.page===2){S.page=1;$('#np').classList.remove('p2')}
   },{passive:true});
-  $('#body').addEventListener('wheel',function(e){e.stopPropagation()},{passive:true});
+  $('#body').addEventListener('wheel',function(e){
+    if(Math.abs(e.deltaX)>30&&Math.abs(e.deltaX)>Math.abs(e.deltaY)){
+      if(e.deltaX<0&&S.page===2){S.page=1;$('#np').classList.remove('p2')}
+      else if(e.deltaX>0&&S.page===1){S.page=2;$('#np').classList.add('p2')}
+      e.stopPropagation();
+    }
+  },{passive:true});
 })();
 
 /* ---------- 登录 ---------- */
