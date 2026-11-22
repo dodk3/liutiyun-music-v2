@@ -551,13 +551,12 @@ $('#rsPl').addEventListener('click',function(e){
 var audio=$('#audio');
 function songURL(s){
   if(s.src==='qq'){
-    var ck=qqCk();
-    if(!ck)return Promise.reject(new Error('QQ音乐未登录，先在右上角 Q 登录'));
+    var ck=qqCk()||'';
     return fetchRetry(qqBase()+'/song/urls?id='+encodeURIComponent(s.id)+'&cookie='+encodeURIComponent(ck),{
       headers:{Authorization:'Bearer '+QQ_TOKEN}
     },22000,'取流',2).then(function(j){
       if(!j.playable)throw new Error(j.note||'这首歌当前不可播放');
-      return j.url;
+      return {url:j.url,trial:!!j.trial,cap:j.cap||60};
     });
   }
   var cookie=ncmCk();
@@ -591,6 +590,8 @@ function playIndex(i){
     if(token!==PLAY_TOKEN)return;
     var url=typeof r==='string'?r:r.url;
     S.br=(typeof r==='object'&&r.br)?r.br:0;
+    S.trial=!!(typeof r==='object'&&r.trial);
+    S.trialCap=(typeof r==='object'&&r.cap)?r.cap:60;
     audio.src=url;
     audio.play().catch(function(){toast('点一下播放键开始播放')});
     updatePlayIcon();
@@ -631,7 +632,7 @@ $('#rsRecent').addEventListener('click',function(e){
   for(var k=0;k<S.queue.length;k++){if(S.queue[k].id===s.id&&S.queue[k].src===s.src){pos=k;break}}
   if(pos<0){S.queue=r.slice();pos=parseInt(row.dataset.r,10)}
   playIndex(pos);
-  songURL(s).then(function(v){audio.src=typeof v==='string'?v:v.url;audio.play();updatePlayIcon();loadLyric(s);loadComments(s,false);renderBadges(s)}).catch(function(er){toast(er.message)});
+  songURL(s).then(function(v){S.trial=!!(v&&v.trial);S.trialCap=(v&&v.cap)||60;audio.src=typeof v==='string'?v:v.url;audio.play();updatePlayIcon();loadLyric(s);loadComments(s,false);renderBadges(s)}).catch(function(er){toast(er.message)});
 });
 
 function tintFrom(url){
@@ -705,6 +706,7 @@ function renderBadges(s){
   var b=[];
   if(S.br)b.push((Math.round(S.br/1000)+'kbps'));
   b.push('歌词');
+  if(S.trial)b.push('试听 '+Math.round((S.trialCap||60)/60*10)/10+' 分钟');
   if(s.src==='qq')b.push('QQ 源');
   $('#npBadges').innerHTML=b.map(function(x){return '<i>'+esc(x)+'</i>'}).join('');
 }
@@ -726,6 +728,12 @@ audio.addEventListener('ended',function(){
 });
 audio.addEventListener('timeupdate',function(){
   if(!audio.duration)return;
+  if(S.trial&&audio.currentTime>=(S.trialCap||60)-0.05){
+    audio.pause();audio.currentTime=(S.trialCap||60)-0.05;
+    setIslandLoading(false);
+    setIsland('试听结束 · 登录 QQ 听完整版');
+    toast('QQ 免登录只给 1 分钟试听，登录后可听完整版');
+  }
   var p=audio.currentTime/audio.duration*100;
   setSeek(p);
   $('#tNow').textContent=fmt(audio.currentTime);
