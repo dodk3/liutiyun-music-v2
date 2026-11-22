@@ -788,7 +788,10 @@ setVol(parseInt(ls(LS.vol,'70'),10),false);
 
 /* ---------- 歌词 ---------- */
 function loadLyric(s){
-  if(S.lyrFor===s.src+':'+s.id)return;
+  if(S.lyrFor===s.src+':'+s.id){
+    if(S.lyr&&S.lyr.length)renderLyric(S.lyr);else $('#lyr').innerHTML='<b>暂无歌词</b>';
+    return;
+  }
   S.lyrFor=s.src+':'+s.id;
   $('#lyr').innerHTML='<b>正在加载歌词…</b>';
   if(s.src==='qq'){
