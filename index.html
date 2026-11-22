@@ -438,7 +438,7 @@ function setIslandCover(u){var im=$('#islandImg');if(!im)return;if(u){im.src=u;i
 function searchNcm(kw){
   var ck=ncmCk();
   var u=ncmBase()+'/cloudsearch?keywords='+encodeURIComponent(kw)+'&limit=30&type=1&t='+Date.now()+(ck?'&cookie='+encodeURIComponent(ck):'');
-  return withTimeout(fetchJSON(u),14000,'搜索').then(function(j){
+  return fetchRetry(u,null,14000,'搜索',2).then(function(j){
     var songs=(j.result&&j.result.songs)||[];
     return songs.map(function(s){
       var ar=(s.ar||s.artists||[]).map(function(a){return a.name}).join(' / ');
