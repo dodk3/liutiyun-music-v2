@@ -164,8 +164,9 @@ body{overflow:hidden}
 
 
 /* 灵动岛 v2（仅播放页前台显示） */
-.island{position:absolute;left:50%;top:calc(52px + env(safe-area-inset-top));transform:translate(-50%,0);z-index:9;display:flex;align-items:center;gap:10px;max-width:min(82%,360px);padding:7px 14px 7px 7px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(28,30,40,.86),rgba(10,11,16,.92));backdrop-filter:blur(26px) saturate(190%);-webkit-backdrop-filter:blur(26px) saturate(190%);border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 34px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 30px var(--glow,rgba(120,160,255,.22));transition:opacity .28s,transform .35s cubic-bezier(.22,.61,.36,1)}
-.np.p2 .island{opacity:0;transform:translate(-50%,-12px);pointer-events:none}
+.island{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translate(-50%,0);z-index:60;display:flex;align-items:center;gap:10px;width:min(300px,calc(100vw - 40px));padding:7px 14px 7px 7px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(28,30,40,.86),rgba(10,11,16,.92));backdrop-filter:blur(26px) saturate(190%);-webkit-backdrop-filter:blur(26px) saturate(190%);border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 34px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.22),0 0 30px var(--glow,rgba(120,160,255,.22));transition:opacity .28s,transform .35s cubic-bezier(.22,.61,.36,1)}
+.island{opacity:0;pointer-events:none;transition:opacity .28s,transform .35s cubic-bezier(.22,.61,.36,1)}
+.island.show{opacity:1;pointer-events:auto}
 .island .ithumb{width:30px;height:30px;border-radius:50%;overflow:hidden;flex:none;background:#20242e;box-shadow:0 0 0 1px rgba(255,255,255,.16)}
 .island .ithumb img{width:100%;height:100%;object-fit:cover;display:block}
 .island .ibars{display:flex;align-items:flex-end;gap:2px;height:14px;flex:none}
@@ -261,12 +262,12 @@ body{overflow:hidden}
   <div class="np-bg" id="npBg"></div>
   <div class="np-blobs" id="npBlobs"><i class="f1"></i><i class="f2"></i><i class="f3"></i></div>
   <div class="np-veil"></div>
-  <div class="island" id="island"><span class="ithumb" id="islandThumb"><img id="islandImg" alt="" style="visibility:hidden"></span><span class="ibars"><i></i><i></i><i></i></span><span id="islandTxt">搜一首开始</span></div>
   <div class="np-pages">
     <div class="page">
       <div class="np-top">
         <span class="pill" id="npSrc">网易云</span>
         <button class="fxbtn" id="fxBtn">音效</button>
+        <button class="fxbtn" id="loopBtn">顺序</button>
         <span class="grow"></span>
         <button class="chev" id="npClose">⌄</button>
       </div>
@@ -346,6 +347,7 @@ body{overflow:hidden}
     </details>
   </div>
 </div>
+<div class="island" id="island"><span class="ithumb" id="islandThumb"><img id="islandImg" alt="" style="visibility:hidden"></span><span class="ibars"><i></i><i></i><i></i></span><span id="islandTxt">搜一首开始</span></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -402,6 +404,11 @@ function setIsland(t){
   if(!isTxt||isTxt.textContent===t)return;
   isTxt.classList.add('swap');
   setTimeout(function(){isTxt.textContent=t;isTxt.classList.remove('swap')},160);
+}
+
+function islandShow(on){
+  var el=$('#island');if(!el)return;
+  el.classList.toggle('show',!!on);
 }
 function islandBeat(on){var el=$('#island');if(el)el.classList.toggle('paused',!on)}
 function setIslandCover(u){var im=$('#islandImg');if(!im)return;if(u){im.src=u;im.style.visibility='visible'}else{im.style.visibility='hidden'}}
@@ -496,15 +503,26 @@ $('#rsPl').addEventListener('click',function(e){
   var el=e.target.closest('[data-pl]');if(!el)return;
   var id=el.getAttribute('data-pl'),nm=el.getAttribute('data-pn');
   toast('正在载入「'+nm+'」');
-  withTimeout(fetchJSON(ncmQ('/playlist/track/all?id='+encodeURIComponent(id)+'&limit=300'),{cache:'no-store'}),18000,'歌单').then(function(j){
-    var songs=(j.songs||[]).map(function(x){
-      var ar=(x.ar||[]).map(function(a){return a.name}).join(' / ');
-      return {id:String(x.id),src:'netease',name:x.name,artist:ar,album:(x.al&&x.al.name)||'',cover:(x.al&&x.al.picUrl)||'',dur:(x.dt||0)/1000};
+  var SONG_CAP=10000, PAGE=500, all=[];
+  var mapSongs=function(arr){return arr.map(function(x){
+    var ar=(x.ar||[]).map(function(a){return a.name}).join(' / ');
+    return {id:String(x.id),src:'netease',name:x.name,artist:ar,album:(x.al&&x.al.name)||'',cover:(x.al&&x.al.picUrl)||'',dur:(x.dt||0)/1000};
+  })};
+  var pull=function(offset){
+    return withTimeout(fetchJSON(ncmQ('/playlist/track/all?id='+encodeURIComponent(id)+'&limit='+PAGE+'&offset='+offset),{cache:'no-store'}),18000,'歌单').then(function(j){
+      var got=mapSongs(j.songs||[]);
+      all=all.concat(got);
+      if(got.length<PAGE||all.length>=SONG_CAP){return all}
+      return pull(all.length);
     });
+  };
+  pull(0).then(function(songs){
     if(!songs.length){toast('这个歌单是空的');return}
+    if(songs.length>=SONG_CAP)songs=songs.slice(0,SONG_CAP);
     S.list=songs;S.queue=songs.slice();
     renderResults(songs,nm);
     $('#scroll').scrollTop=0;
+    toast('已载入 '+songs.length+' 首');
   }).catch(function(e){toast(e.message||'歌单载入失败')});
 });
 /* ---------- 播放 ---------- */
@@ -647,6 +665,7 @@ function showPlaying(s){
   setSeek(0);
   $('#np').classList.add('open');
   $('.np').classList.remove('p2');S.page=1;
+  islandShow(false);
   $('#lyr').innerHTML='<b>正在加载歌词…</b>';
   $('#npTitle').scrollTop=0;
 }
@@ -667,7 +686,12 @@ audio.addEventListener('play',function(){updatePlayIcon();if('mediaSession' in n
 audio.addEventListener('pause',function(){updatePlayIcon();if('mediaSession' in navigator){try{navigator.mediaSession.playbackState='paused'}catch(e){}}});
 audio.addEventListener('play',function(){islandBeat(true)});
 audio.addEventListener('pause',function(){islandBeat(false)});
-audio.addEventListener('ended',function(){if(S.queue.length){playIndex((S.qpos+1)%S.queue.length)}else updatePlayIcon()});
+audio.addEventListener('ended',function(){
+  if(!S.queue.length){updatePlayIcon();return}
+  if(LOOP==='one'){try{audio.currentTime=0;audio.play()}catch(e){}return}
+  if(LOOP==='shuffle'){playIndex(randomIndex());return}
+  playIndex((S.qpos+1)%S.queue.length);
+});
 audio.addEventListener('timeupdate',function(){
   if(!audio.duration)return;
   var p=audio.currentTime/audio.duration*100;
@@ -832,6 +856,7 @@ function fxApply(mode){
   var chips=document.querySelectorAll('#fxPanel b');
   for(var i=0;i<chips.length;i++)chips[i].classList.toggle('on',chips[i].getAttribute('data-fx')===mode);
 }
+$('#loopBtn').addEventListener('click',function(e){e.stopPropagation();loopNext()});
 $('#fxBtn').addEventListener('click',function(e){
   e.stopPropagation();
   var p=$('#fxPanel');p.classList.toggle('show');
@@ -868,6 +893,7 @@ function closeNP(){
   $('#np').classList.remove('open','p2');S.page=1;
   /* 收起播放页不暂停，交给迷你条继续放 */
   updatePlayIcon();
+  islandShow(!!audio.src);
 }
 $('#npClose').addEventListener('click',closeNP);
 $('#npClose2').addEventListener('click',closeNP);
@@ -891,12 +917,33 @@ function toggle(){
   fxInit();
   if(audio.paused)audio.play().catch(function(){toast('播放被浏览器拦截了')});else audio.pause();
 }
+
+/* ---------- 播放模式：顺序 / 单曲 / 随机 ---------- */
+var LOOP=ls('fc2_loop','seq');
+function loopPaint(){
+  var b=$('#loopBtn');if(!b)return;
+  b.textContent={seq:'顺序',one:'单曲',shuffle:'随机'}[LOOP]||'顺序';
+  b.classList.toggle('on',LOOP!=='seq');
+}
+function loopNext(){
+  LOOP=LOOP==='seq'?'one':(LOOP==='one'?'shuffle':'seq');
+  setls('fc2_loop',LOOP);loopPaint();
+  toast({seq:'顺序播放',one:'单曲循环',shuffle:'随机播放'}[LOOP]);
+}
+function randomIndex(){
+  if(S.queue.length<=1)return 0;
+  var i=S.qpos,r=0;
+  do{r=Math.floor(Math.random()*S.queue.length)}while(r===i&&S.queue.length>1);
+  return r;
+}
 function prev(){
   if(!S.queue.length){toast('先搜一首歌');return}
+  if(LOOP==='shuffle'){playIndex(randomIndex());return}
   if(S.qpos<=0){playIndex(S.queue.length-1);toast('已循环到最后一首')}else playIndex(S.qpos-1);
 }
 function next(){
   if(!S.queue.length){toast('先搜一首歌');return}
+  if(LOOP==='shuffle'){playIndex(randomIndex());return}
   if(S.qpos>=S.queue.length-1){playIndex(0);toast('已循环到第一首')}else playIndex(S.qpos+1);
 }
 
@@ -1104,6 +1151,7 @@ $('#btnSearch').addEventListener('click',doSearch);
 $('#kw').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doSearch()}});
 document.addEventListener('fc:noop',function(){});
 renderRecent();
+loopPaint();
 markLogin();
 loadMyPlaylists();
 (function(){
