@@ -204,6 +204,12 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 .fxpanel b{font-size:10px;font-weight:600;padding:6px 11px;border-radius:999px;color:#9aa3b5;background:rgba(255,255,255,.06);cursor:pointer;white-space:nowrap}
 .fxpanel b.on{background:#fff;color:#111}
 
+
+.island .ispin{display:none;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;animation:spin .8s linear infinite;flex:none;position:relative;z-index:2}
+.island.loading .ispin{display:block}
+.island.loading .ibars{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 </style>
 </head>
 <body>
@@ -341,7 +347,7 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
     </details>
   </div>
 </div>
-<div class="island" id="island"><span class="ithumb" id="islandThumb"><img id="islandImg" alt="" style="visibility:hidden"></span><span class="ibars"><i></i><i></i><i></i></span><span id="islandTxt">搜一首开始</span></div>
+<div class="island" id="island"><span class="ithumb" id="islandThumb"><img id="islandImg" alt="" style="visibility:hidden"></span><span class="ibars"><i></i><i></i><i></i></span><span class="ispin"></span><span id="islandTxt">搜一首开始</span></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -400,6 +406,11 @@ function setIsland(t){
   setTimeout(function(){isTxt.textContent=t;isTxt.classList.remove('swap')},160);
 }
 
+
+function setIslandLoading(on){
+  var el=$('#island');if(!el)return;
+  el.classList.toggle('loading',!!on);
+}
 function islandShow(on){
   var el=$('#island');if(!el)return;
   el.classList.toggle('show',!!on);
@@ -557,7 +568,9 @@ function playIndex(i){
   if(i>=S.queue.length)i=0;
   var s=S.queue[i];if(!s)return;
   S.idx=i;S.qpos=i;
-  setIsland('歌词加载中…');
+  setIslandLoading(true);
+  setIsland('正在加载…');
+  islandShow(true);
   showPlaying(s);setIslandCover(s.cover);setupMediaSession(s);
   audio.pause();
   songURL(s).then(function(r){
@@ -662,9 +675,11 @@ function showPlaying(s){
   renderBadges(s);
   $('#tNow').textContent='00:00';$('#tAll').textContent=s.dur?fmt(s.dur):'00:00';
   setSeek(0);
-  $('#np').classList.add('open');
+  /* 点击歌曲不自动进入播放器：保持当前列表，由灵动岛显示加载 */
   $('.np').classList.remove('p2');S.page=1;
-  islandShow(false);
+  setIslandLoading(true);
+  setIsland('正在加载…');
+  islandShow(true);
   $('#lyr').innerHTML='<b>正在加载歌词…</b>';
   $('#npTitle').scrollTop=0;
 }
@@ -683,7 +698,7 @@ function updatePlayIcon(){
 }
 audio.addEventListener('play',function(){updatePlayIcon();if('mediaSession' in navigator){try{navigator.mediaSession.playbackState='playing'}catch(e){}}});
 audio.addEventListener('pause',function(){updatePlayIcon();if('mediaSession' in navigator){try{navigator.mediaSession.playbackState='paused'}catch(e){}}});
-audio.addEventListener('play',function(){islandBeat(true)});
+audio.addEventListener('play',function(){islandBeat(true);setIslandLoading(false)});
 audio.addEventListener('pause',function(){islandBeat(false)});
 audio.addEventListener('ended',function(){
   if(!S.queue.length){updatePlayIcon();return}
@@ -699,7 +714,7 @@ audio.addEventListener('timeupdate',function(){
   syncLyric(audio.currentTime);
 });
 audio.addEventListener('loadedmetadata',function(){$('#tAll').textContent=fmt(audio.duration)});
-audio.addEventListener('error',function(){if(audio.src)toast('音频加载失败，换一首试试')});
+audio.addEventListener('error',function(){if(audio.src){setIslandLoading(false);setIsland('加载失败，换一首');toast('音频加载失败，换一首试试')}});
 
 function setSeek(p){
   p=Math.max(0,Math.min(100,p||0));
@@ -896,10 +911,17 @@ function closeNP(){
 }
 $('#npClose').addEventListener('click',closeNP);
 $('#npClose2').addEventListener('click',closeNP);
+$('#island').addEventListener('click',function(){
+  if(!audio.src)return;
+  $('#np').classList.add('open');
+  islandShow(false);
+  updatePlayIcon();
+});
 $('#mini').addEventListener('click',function(e){
   if(e.target.closest('.mbtn'))return;
   if(!$('#npTitle').textContent||$('#npTitle').textContent==='-')return;
   $('#np').classList.add('open');
+  islandShow(false);
   $('#np').classList.remove('p2');S.page=1;
 });
 $('#npPlay').addEventListener('click',toggle);
