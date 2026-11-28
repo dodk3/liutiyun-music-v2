@@ -1498,7 +1498,7 @@ var DICT={
     ghSub:'推荐 · 设备码授权，无需备案域名', wxSub:'网页授权 · 需 AppID 与备案域名', qqSub:'QQ 互联 · 需备案域名与资质',
     provNote:'GitHub 现在就能用；微信、QQ 网页登录需要已认证应用和 ICP 备案的回调域名，配好后点按钮会自动跳转授权。',
     devStep:'在浏览器打开', devStep2:'并输入下面的代码', devWait:'等待授权…', devExpired:'代码已失效，请点 GitHub 重新获取',
-    copy:'复制代码', copied:'已复制', cancel:'取消',
+    copy:'复制代码', copied:'已复制', cancel:'取消', authFail:'登录未完成，请重试',
     qqNeed:'QQ 登录还没配置：QQ 互联要求 ICP 备案域名和企业/个人资质，github.io 不能作为回调域名',
     wxNote:'微信登录需要公众号 AppID 和已备案的回调域名，配置后点这里会自动跳转授权。',
     wxNeed:'微信登录还没配置：需要公众号 AppID + 已备案的网页授权域名（github.io 不能作为回调域名）',
@@ -1525,7 +1525,7 @@ var DICT={
     ghSub:'Recommended · device-code flow, no filed domain needed', wxSub:'Web OAuth · needs AppID and a filed domain', qqSub:'QQ Connect · needs a filed domain and credentials',
     provNote:'GitHub works right now. WeChat and QQ web sign-in need a verified app and an ICP-filed callback domain; once configured these buttons redirect automatically.',
     devStep:'Open', devStep2:'in a browser and enter this code', devWait:'Waiting for authorization…', devExpired:'Code expired — tap GitHub to get a new one',
-    copy:'Copy code', copied:'Copied', cancel:'Cancel',
+    copy:'Copy code', copied:'Copied', cancel:'Cancel', authFail:'Sign-in did not complete — please try again',
     qqNeed:'QQ sign-in is not configured yet: QQ Connect requires an ICP-filed domain plus business/personal credentials — github.io cannot be a callback domain.',
     wxNote:'WeChat sign-in needs an official-account AppID on an ICP-filed callback domain. Once configured, this button redirects automatically.',
     wxNeed:'WeChat sign-in is not configured yet: it needs an official-account AppID and an ICP-filed OAuth domain (github.io cannot be a callback domain).',
@@ -1569,7 +1569,7 @@ function deviceID(){
   return d;
 }
 /* 全局账号：OAuth 登录态（GitHub 设备码 / 微信 / QQ） */
-var AUTH={token:'',user:null,dc:'',step:'idle',timer:null};
+var AUTH={token:'',user:null,dc:'',step:'idle',timer:null,cfg:null};
 function loadAuth(){
   try{
     var a=JSON.parse(ls('fc2_auth','null'));
@@ -1709,6 +1709,44 @@ function openSign(){
 }
 function closeSign(){stopPoll();$('#signin').classList.remove('open')}
 function stopPoll(){if(AUTH.timer){clearInterval(AUTH.timer);AUTH.timer=null}}
+function getCfg(){
+  if(AUTH.cfg)return Promise.resolve(AUTH.cfg);
+  return authApi('/app/config',null,'GET').then(function(j){AUTH.cfg=j;return j});
+}
+function startProvider(p){
+  return getCfg().then(function(j){
+    var pv=(j&&j.providers&&j.providers[p])||{};
+    if(pv.mode==='redirect'&&pv.start){
+      location.href=commBase()+pv.start;
+      return;
+    }
+    if(p==='github'){ghStart();return}
+    toast(pv.reason||T(p==='wechat'?'wxNeed':'qqNeed'));
+  }).catch(function(){toast(T('net'))});
+}
+function activeProvider(p){startProvider(p)}
+function consumeReturn(){
+  var h=String(location.hash||'');
+  var m=h.match(/[#&]fc_auth=([^&]+)/), e=h.match(/[#&]fc_auth_err=([^&]+)/);
+  if(!m&&!e)return;
+  if(m){
+    try{AUTH.token=decodeURIComponent(m[1]);AUTH.cfg=null;AUTH.user=AUTH.user||null}catch(err){}
+    saveAuth();
+    try{history.replaceState(null,'',location.pathname+location.search)}catch(err){}
+    authApi('/auth/me?token='+encodeURIComponent(AUTH.token),null,'GET').then(function(j){
+      if(j&&j.ok&&j.user){
+        AUTH.user=j.user;saveAuth();renderAcct();renderMe();renderComm();
+        toast(T('welcome')+'，'+(AUTH.user.nick||''));
+      }else{
+        clearAuth();renderAcct();renderMe();
+        toast(T('net'));
+      }
+    }).catch(function(){toast(T('net'))});
+  }else{
+    try{history.replaceState(null,'',location.pathname+location.search)}catch(err){}
+    toast(T('authFail'));
+  }
+}
 function ghStart(){
   $('#sgPane').style.display='none';
   $('#sgAccount').style.display='none';
@@ -1720,6 +1758,7 @@ function ghStart(){
     if(!j.ok||!j.device_code)throw new Error(j.error||'start_failed');
     AUTH.dc=j.device_code;AUTH.step='dev';
     $('#sgCode').textContent=j.user_code||'';
+    try{window.open('https://github.com/login/device?user_code='+encodeURIComponent(j.user_code||''),'_blank')}catch(err){}
     stopPoll();
     AUTH.timer=setInterval(ghPoll,Math.max(5000,((j.interval||5)*1000)+500));
   }).catch(function(e){
@@ -1828,9 +1867,9 @@ function bindComm(){
     if(sg){playShared(+sg.getAttribute('data-song'));return}
   });
   $('#sgClose').addEventListener('click',closeSign);
-  $('#sgGh').addEventListener('click',ghStart);
-  $('#sgWx').addEventListener('click',wxLogin);
-  $('#sgQq').addEventListener('click',qqLogin);
+  $('#sgGh').addEventListener('click',function(){activeProvider('github')});
+  $('#sgWx').addEventListener('click',function(){activeProvider('wechat')});
+  $('#sgQq').addEventListener('click',function(){activeProvider('qq')});
   $('#sgCopy').addEventListener('click',copyCode);
   $('#sgCancel').addEventListener('click',function(){stopPoll();openSign()});
   $('#sgOut').addEventListener('click',signOut);
@@ -1842,7 +1881,7 @@ function bindComm(){
   if(code)setTimeout(function(){toast(LANG==='en'?'WeChat code received — the backend still needs an AppID/secret exchange':'已收到微信授权码，还需后端用 AppID/secret 换取身份')},900);
   applyLang();
 }
-loadAuth();renderAcct();bindComm();verifyToken();
+loadAuth();consumeReturn();renderAcct();bindComm();verifyToken();
 
 
 /* ---------- 启动 ---------- */
