@@ -276,7 +276,9 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 .clist{flex:1;overflow:auto;padding:12px 16px calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
 .cpost{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px 13px;margin-bottom:11px}
 .cpost .ch{display:flex;align-items:center;gap:8px;font-size:12px;color:#9aa3b5;min-width:0}
-.cpost .ch .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(140deg,#5b8cff,#b28cff);display:grid;place-items:center;color:#fff;font-size:11px;flex:none}
+.cpost .ch .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(140deg,#5b8cff,#b28cff);display:grid;place-items:center;color:#fff;font-size:11px;flex:none;overflow:hidden;position:relative}
+.cpost .ch .av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.cpost .ch .pv{font-style:normal;font-size:10px;color:#7f889a;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:1px 6px;flex:none}
 .cpost .ch b{font-size:12.5px;color:#e6ebf4;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cpost .ch em{font-style:normal;font-size:10.5px;color:#6f7788;flex:none;margin-left:auto}
 .cpost .ctxt{margin:9px 0 0;font-size:13px;line-height:1.6;color:#e8ecf4;white-space:pre-wrap;word-break:break-word}
@@ -300,6 +302,35 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 .sgrid{display:flex;gap:10px;align-items:center;margin:18px 0 6px}
 .sgrid .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,#5b8cff,#b28cff);display:grid;place-items:center;font-size:16px;color:#fff;flex:none}
 .sgrid input{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#eef2f8;font-size:13px;outline:none}
+/* 账号登录面板 */
+.auth-card{width:min(430px,calc(100vw - 36px))}
+.prov{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#eef2f8;cursor:pointer;text-align:left;box-sizing:border-box}
+.prov:hover{border-color:rgba(255,255,255,.32)}
+.prov .pi{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex:none;letter-spacing:0}
+.prov .pi.gh{background:#1f2328;border:1px solid #3a414b}
+.prov .pi.wx{background:#07c160}
+.prov .pi.qq{background:#12b7f5;font-size:14px}
+.prov .pt{flex:1;min-width:0}
+.prov .pt b{display:block;font-size:13.5px;font-weight:600}
+.prov .pt small{display:block;font-size:11px;color:#8b93a5;margin-top:3px}
+.prov .pg{color:#8b93a5;font-size:15px}
+.acct{display:flex;align-items:center;gap:12px;margin:18px 0 2px}
+.acct .sa-av{width:50px;height:50px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;background:linear-gradient(140deg,#5b8cff,#b28cff);color:#fff;font-size:16px}
+.acct .sa-av img{width:100%;height:100%;object-fit:cover}
+.acct .sa-meta b{font-size:15px}
+.acct .sa-meta small{display:block;font-size:11.5px;color:#8b93a5;margin-top:4px}
+.dev{display:block;margin-top:12px}
+.dstep{font-size:12px;color:#9aa3b4;line-height:1.7;margin:0 0 10px}
+.dstep a{color:#7fb0ff;word-break:break-all}
+.dcode{font-size:24px;letter-spacing:4px;font-weight:700;text-align:center;padding:14px 8px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff}
+.dst{text-align:center;font-size:12px;color:#8b93a5;margin-top:10px;line-height:1.6}
+.dacts{display:flex;gap:8px;margin-top:12px}
+.dbtn{flex:1;padding:9px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#dfe5ef;font-size:12px;cursor:pointer}
+.iconbtn#btnAcct{padding:0;overflow:hidden;font-size:11px;transition:border-color .2s}
+.iconbtn#btnAcct img{width:100%;height:100%;object-fit:cover;display:block}
+.iconbtn#btnAcct.on{border-color:rgba(255,255,255,.42);color:#fff}
+.acct .sa-av img,.me .av img{width:100%;height:100%;object-fit:cover}
+.me .av{overflow:hidden}
 @media(min-width:620px){
   .modal.comm{align-items:center;padding:26px}
   .comm-card{height:min(80vh,760px);border-radius:22px;border:1px solid rgba(255,255,255,.1)}
@@ -327,6 +358,7 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
     <div class="brand">流体云<i>·</i>音乐</div><div class="who" id="who"></div>
     <div class="grow"></div>
     <button class="iconbtn" id="btnComm" title="音乐社区">社</button>
+    <button class="iconbtn" id="btnAcct" title="账号">登</button>
     <button class="iconbtn" id="btnLang" title="Language / 语言">EN</button>
     <button class="iconbtn" id="btnNcm" title="网易云登录">云</button>
     <button class="iconbtn" id="btnQq" title="QQ音乐登录">Q</button>
@@ -470,13 +502,29 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 </div>
 
 <div class="modal" id="signin">
-  <div class="card">
-    <header><div class="h"><b data-i18n="signTitle">登录</b><small data-i18n="signSub">填个昵称就能进社区，不用密码</small></div><button class="x" id="sgClose">✕</button></header>
-    <div class="sgrid"><div class="av" id="sgAv">谊</div><input id="sgNick" maxlength="16" data-i18n-ph="nickPh" placeholder="你的昵称" autocomplete="off"></div>
-    <div class="sgacts"><button id="sgGo" data-i18n="join">进入社区</button><button id="sgOut" data-i18n="signOut">退出</button></div>
-    <button class="wxbtn" id="sgWx" data-i18n="wechat">微信一键登录</button>
-    <small class="wxnote" data-i18n="wxNote">微信登录需要公众号 AppID 和已备案的回调域名，配置后点这里会自动跳转授权。</small>
-    <div class="note" data-i18n="signNote">登录状态只保存在本机，社区里只显示你的昵称。</div>
+  <div class="card auth-card">
+    <header><div class="h"><b data-i18n="signTitle">登录流体云</b><small data-i18n="signSub">选择 GitHub、微信或 QQ 登录</small></div><button class="x" id="sgClose">✕</button></header>
+
+    <div id="sgAccount" class="acct" style="display:none">
+      <div class="sa-av" id="saAv">谊</div>
+      <div class="sa-meta"><b id="saName">—</b><small><span id="saProv">GitHub</span> · <span data-i18n="signedIn">已登录</span></small></div>
+    </div>
+
+    <div id="sgPane">
+      <button class="prov" id="sgGh"><span class="pi gh">GH</span><span class="pt"><b>GitHub</b><small data-i18n="ghSub">推荐 · 设备码授权，无需备案域名</small></span><span class="pg">›</span></button>
+      <button class="prov" id="sgWx"><span class="pi wx">微</span><span class="pt"><b data-i18n="wechat">微信</b><small data-i18n="wxSub">网页授权 · 需 AppID 与备案域名</small></span><span class="pg">›</span></button>
+      <button class="prov" id="sgQq"><span class="pi qq">Q</span><span class="pt"><b>QQ</b><small data-i18n="qqSub">QQ 互联 · 需备案域名与资质</small></span><span class="pg">›</span></button>
+      <div class="note" data-i18n="provNote">GitHub 现在就能用；微信、QQ 网页登录需要已认证应用和 ICP 备案的回调域名，配好后点按钮会自动跳转授权。</div>
+    </div>
+
+    <div id="sgDev" class="dev" style="display:none">
+      <p class="dstep"><span data-i18n="devStep">在浏览器打开</span> <a href="https://github.com/login/device" target="_blank" rel="noopener">github.com/login/device</a> <span data-i18n="devStep2">并输入下面的代码</span></p>
+      <div class="dcode" id="sgCode">----</div>
+      <div class="dst" id="sgDevSt">等待授权…</div>
+      <div class="dacts"><button id="sgCopy" class="dbtn" data-i18n="copy">复制代码</button><button id="sgCancel" class="dbtn" data-i18n="cancel">取消</button></div>
+    </div>
+
+    <button id="sgOut" data-i18n="signOut">退出登录</button>
   </div>
 </div>
 
@@ -1445,8 +1493,13 @@ var DICT={
     share:'分享', npHint:'左滑看歌词与评论', lyricTab:'歌词', cmtTab:'评论',
     community:'音乐社区', commSub:'把喜欢的歌分享出来，也能听到别人在听什么',
     post:'＋ 分享', signIn:'登录', signOut:'退出',
-    signTitle:'登录', signSub:'填个昵称就能进社区，不用密码', nickPh:'你的昵称', join:'进入社区',
-    wechat:'微信一键登录',
+    signTitle:'登录流体云', signSub:'选择 GitHub、微信或 QQ 登录', nickPh:'你的昵称', join:'进入社区',
+    wechat:'微信', signedIn:'已登录',
+    ghSub:'推荐 · 设备码授权，无需备案域名', wxSub:'网页授权 · 需 AppID 与备案域名', qqSub:'QQ 互联 · 需备案域名与资质',
+    provNote:'GitHub 现在就能用；微信、QQ 网页登录需要已认证应用和 ICP 备案的回调域名，配好后点按钮会自动跳转授权。',
+    devStep:'在浏览器打开', devStep2:'并输入下面的代码', devWait:'等待授权…', devExpired:'代码已失效，请点 GitHub 重新获取',
+    copy:'复制代码', copied:'已复制', cancel:'取消',
+    qqNeed:'QQ 登录还没配置：QQ 互联要求 ICP 备案域名和企业/个人资质，github.io 不能作为回调域名',
     wxNote:'微信登录需要公众号 AppID 和已备案的回调域名，配置后点这里会自动跳转授权。',
     wxNeed:'微信登录还没配置：需要公众号 AppID + 已备案的网页授权域名（github.io 不能作为回调域名）',
     signNote:'登录状态只保存在本机，社区里只显示你的昵称。',
@@ -1467,8 +1520,13 @@ var DICT={
     share:'Share', npHint:'Swipe left for lyrics and comments', lyricTab:'Lyrics', cmtTab:'Comments',
     community:'Community', commSub:'Share what you love, and see what others are playing',
     post:'＋ Share', signIn:'Sign in', signOut:'Sign out',
-    signTitle:'Sign in', signSub:'Pick a nickname to join — no password needed', nickPh:'Your nickname', join:'Continue',
-    wechat:'Sign in with WeChat',
+    signTitle:'Sign in to FluidCloud', signSub:'Continue with GitHub, WeChat or QQ', nickPh:'Your nickname', join:'Continue',
+    wechat:'WeChat', signedIn:'Signed in',
+    ghSub:'Recommended · device-code flow, no filed domain needed', wxSub:'Web OAuth · needs AppID and a filed domain', qqSub:'QQ Connect · needs a filed domain and credentials',
+    provNote:'GitHub works right now. WeChat and QQ web sign-in need a verified app and an ICP-filed callback domain; once configured these buttons redirect automatically.',
+    devStep:'Open', devStep2:'in a browser and enter this code', devWait:'Waiting for authorization…', devExpired:'Code expired — tap GitHub to get a new one',
+    copy:'Copy code', copied:'Copied', cancel:'Cancel',
+    qqNeed:'QQ sign-in is not configured yet: QQ Connect requires an ICP-filed domain plus business/personal credentials — github.io cannot be a callback domain.',
     wxNote:'WeChat sign-in needs an official-account AppID on an ICP-filed callback domain. Once configured, this button redirects automatically.',
     wxNeed:'WeChat sign-in is not configured yet: it needs an official-account AppID and an ICP-filed OAuth domain (github.io cannot be a callback domain).',
     signNote:'Your session stays on this device. Only your nickname is shown in the community.',
@@ -1510,8 +1568,31 @@ function deviceID(){
   if(!d){d='d'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4).replace(/[^a-z0-9]/g,'');setls('fc2_dev',d)}
   return d;
 }
-function user(){try{return JSON.parse(ls('fc2_user','null'))}catch(e){return null}}
-function setUser(u){setls('fc2_user',JSON.stringify(u))}
+/* 全局账号：OAuth 登录态（GitHub 设备码 / 微信 / QQ） */
+var AUTH={token:'',user:null,dc:'',step:'idle',timer:null};
+function loadAuth(){
+  try{
+    var a=JSON.parse(ls('fc2_auth','null'));
+    if(a&&a.token){AUTH.token=a.token||'';AUTH.user=a.user||null}
+  }catch(e){}
+}
+function saveAuth(){setls('fc2_auth',JSON.stringify({token:AUTH.token,user:AUTH.user}))}
+function clearAuth(){AUTH.token='';AUTH.user=null;stopPoll();try{localStorage.removeItem('fc2_auth')}catch(e){}
+  try{localStorage.removeItem('fc2_user')}catch(e){}}
+function user(){return AUTH.user}
+function providerName(p){return ({github:'GitHub',wechat:'微信',qq:'QQ'})[p]||(p||'账号')}
+function authApi(path,body,method){
+  var h={'Content-Type':'application/json'};
+  if(commBase()===QQ_DEFAULT)h.Authorization='Bearer '+QQ_TOKEN;
+  return fetchJSON(commBase()+path,{method:method||'POST',headers:h,body:body?JSON.stringify(body):undefined});
+}
+function renderAcct(){
+  var b=$('#btnAcct');if(!b)return;
+  var u=AUTH.user;
+  if(u&&u.avatar&&String(u.avatar).indexOf('http')===0){b.innerHTML='<img src="'+esc(H(u.avatar))+'" alt="">';b.classList.add('on')}
+  else if(u){b.innerHTML='';b.textContent=(u.nick||'我').slice(0,1);b.classList.add('on')}
+  else{b.innerHTML='';b.textContent='登';b.classList.remove('on')}
+}
 function commBase(){return qqBase()}
 function commFetch(path,opt){
   opt=opt||{};
@@ -1529,9 +1610,16 @@ function ago(ts){
 function openComm(){closeSign();$('#comm').classList.add('open');renderMe();loadComm()}
 function closeComm(){$('#comm').classList.remove('open')}
 function renderMe(){
-  var u=user(),plate=$('#cMeName'),av=$('#cAv');
-  if(!u){if(plate)plate.textContent=T('guest');if(av)av.textContent='谊';$('#cSign').style.display='';}
-  else{if(plate)plate.textContent=u.nick;if(av)av.textContent=(u.nick||'谊').slice(0,1);$('#cSign').style.display='none';}
+  var u=AUTH.user,plate=$('#cMeName'),av=$('#cAv');
+  if(!u){
+    if(plate)plate.textContent=T('guest');
+    if(av){av.innerHTML='谊'}
+    if($('#cSign'))$('#cSign').style.display='';
+  }else{
+    if(plate)plate.textContent=u.nick||'';
+    if(av){av.innerHTML=u.avatar?'<img src="'+esc(H(u.avatar))+'" alt="">':esc((u.nick||'谊').slice(0,1))}
+    if($('#cSign'))$('#cSign').style.display='none';
+  }
   var cp=$('#cShare');if(cp)cp.textContent=T('post');
 }
 function loadComm(){
@@ -1549,13 +1637,13 @@ function loadComm(){
 function renderComm(){
   var box=$('#cList');if(!box)return;
   if(!COMM.posts.length){box.innerHTML='<div class="cempty">'+esc(T('commEmpty'))+'</div>';return}
-  var u=user(),me=u&&u.id;
+  var u=AUTH.user,me=u&&u.uid;
   var h='';
   COMM.posts.forEach(function(p,i){
     var liked=me&&p.likes&&p.likes.indexOf(me)>=0;
     var likes=(p.likes&&p.likes.length)||0;
     h+='<div class="cpost" data-i="'+i+'">'+
-       '<div class="ch"><div class="av">'+esc((p.nick||'?').slice(0,1))+'</div><b>'+esc(p.nick||'')+'</b><em>'+esc(ago(p.ts))+'</em></div>';
+       '<div class="ch"><div class="av">'+(p.avatar?'<img src="'+esc(H(p.avatar))+'" alt="">':esc((p.nick||'?').slice(0,1)))+'</div><b>'+esc(p.nick||'')+'</b>'+(p.provider?'<i class="pv">'+esc(providerName(p.provider))+'</i>':'')+'<em>'+esc(ago(p.ts))+'</em></div>';
     if(p.text)h+='<p class="ctxt">'+esc(p.text)+'</p>';
     if(p.song){
       var sg=p.song;
@@ -1573,21 +1661,21 @@ function renderComm(){
 }
 function likeComm(i){
   var p=COMM.posts[i];if(!p)return;
-  var u=user();
+  var u=AUTH.user;
   if(!u){toast(T('needSign'));openSign();return}
-  commFetch('/community/like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:u.id,id:p.id})})
+  commFetch('/community/like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:u.uid,id:p.id})})
     .then(function(j){
       if(!j.ok)throw new Error(j.error);
       p.likes=p.likes||[];
-      var idx=p.likes.indexOf(u.id);
-      if(j.liked){if(idx<0)p.likes.push(u.id)}else if(idx>=0){p.likes.splice(idx,1)}
+      var idx=p.likes.indexOf(u.uid);
+      if(j.liked){if(idx<0)p.likes.push(u.uid)}else if(idx>=0){p.likes.splice(idx,1)}
       renderComm();
     }).catch(function(){toast(T('net'))});
 }
 function delComm(i){
   var p=COMM.posts[i];if(!p)return;
-  var u=user();if(!u){return}
-  commFetch('/community/del',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:u.id,id:p.id})})
+  var u=AUTH.user;if(!u){return}
+  commFetch('/community/del',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:u.uid,id:p.id})})
     .then(function(j){
       if(!j.ok)throw new Error(j.error);
       COMM.posts.splice(i,1);renderComm();toast(T('delDone'));
@@ -1604,26 +1692,65 @@ function playShared(i){
   playIndex(0);
 }
 
-/* 登录（本机昵称账号 + 微信入口） */
+/* 登录弹窗：GitHub 设备码 / 微信 / QQ */
 function openSign(){
-  var u=user();
-  $('#sgNick').value=u?u.nick:'';
-  $('#sgAv').textContent=(u&&u.nick?u.nick:'谊').slice(0,1);
+  stopPoll();AUTH.step='pane';
+  var u=AUTH.user;
+  $('#sgPane').style.display=u?'none':'';
+  $('#sgAccount').style.display=u?'flex':'none';
+  $('#sgDev').style.display='none';
   $('#sgOut').style.display=u?'':'none';
+  if(u){
+    $('#saName').textContent=u.nick||'';
+    $('#saProv').textContent=providerName(u.provider);
+    $('#saAv').innerHTML=u.avatar?'<img src="'+esc(H(u.avatar))+'" alt="">':esc((u.nick||'我').slice(0,1));
+  }
   $('#signin').classList.add('open');
-  setTimeout(function(){try{$('#sgNick').focus()}catch(e){}},300);
 }
-function closeSign(){$('#signin').classList.remove('open')}
-function doSign(){
-  var nick=($('#sgNick').value||'').trim();
-  if(!nick){toast(T('nickPh'));return}
-  var u=user()||{id:deviceID()};
-  u.nick=nick.slice(0,16);u.ts=Date.now();
-  setUser(u);
-  $('#sgAv').textContent=u.nick.slice(0,1);
-  closeSign();renderMe();renderComm();
-  toast(T('welcome')+'，'+u.nick);
-  if(COMM.pending){var s0=COMM.pending;COMM.pending=null;setTimeout(function(){openComposer(s0)},260)}
+function closeSign(){stopPoll();$('#signin').classList.remove('open')}
+function stopPoll(){if(AUTH.timer){clearInterval(AUTH.timer);AUTH.timer=null}}
+function ghStart(){
+  $('#sgPane').style.display='none';
+  $('#sgAccount').style.display='none';
+  $('#sgOut').style.display='none';
+  $('#sgDev').style.display='';
+  $('#sgCode').textContent='····';
+  $('#sgDevSt').textContent=T('devWait');
+  authApi('/auth/github/start',{}).then(function(j){
+    if(!j.ok||!j.device_code)throw new Error(j.error||'start_failed');
+    AUTH.dc=j.device_code;AUTH.step='dev';
+    $('#sgCode').textContent=j.user_code||'';
+    stopPoll();
+    AUTH.timer=setInterval(ghPoll,Math.max(5000,((j.interval||5)*1000)+500));
+  }).catch(function(e){
+    $('#sgDev').style.display='none';$('#sgPane').style.display='';
+    toast(T('net')+(e&&e.message?' · '+e.message:''));
+  });
+}
+function ghPoll(){
+  if(!AUTH.dc||AUTH.step!=='dev')return;
+  authApi('/auth/github/poll',{device_code:AUTH.dc}).then(function(j){
+    if(j.ok&&j.status==='authorized'&&j.token){
+      AUTH.token=j.token;AUTH.user=j.user;AUTH.dc='';AUTH.step='done';
+      saveAuth();stopPoll();closeSign();renderAcct();renderMe();renderComm();
+      toast(T('welcome')+'，'+(AUTH.user?AUTH.user.nick:''));
+      if(COMM.pending){var s0=COMM.pending;COMM.pending=null;setTimeout(function(){openComposer(s0)},260)}
+      return;
+    }
+    if(j.status==='slow_down'){stopPoll();AUTH.timer=setInterval(ghPoll,12000);return}
+    if(j.status==='expired_token'||j.status==='access_denied'){
+      stopPoll();AUTH.step='expired';
+      $('#sgDevSt').textContent=T('devExpired');
+    }
+  }).catch(function(){});
+}
+function copyCode(){
+  var c=$('#sgCode').textContent||'';
+  try{navigator.clipboard.writeText(c).then(function(){toast(T('copied'))},function(){toast(c)})}catch(e){toast(c)}
+}
+function signOut(){
+  clearAuth();closeSign();renderAcct();renderMe();renderComm();
+  toast(T('signOut'));
 }
 function wxLogin(){
   var appid=ls('fc2_wxappid','');
@@ -1631,6 +1758,14 @@ function wxLogin(){
   var redirect=location.origin+location.pathname;
   location.href='https://open.weixin.qq.com/connect/oauth2/authorize?appid='+encodeURIComponent(appid)+
     '&redirect_uri='+encodeURIComponent(redirect)+'&response_type=code&scope=snsapi_userinfo&state=fcw#wechat_redirect';
+}
+function qqLogin(){toast(T('qqNeed'))}
+function verifyToken(){
+  if(!AUTH.token)return;
+  authApi('/auth/me?token='+encodeURIComponent(AUTH.token),null,'GET').then(function(j){
+    if(j&&j.ok&&j.user){AUTH.user=j.user;saveAuth();renderAcct();renderMe()}
+    else if(j&&!j.ok){clearAuth();renderAcct();renderMe();renderComm()}
+  }).catch(function(){});
 }
 
 /* 发帖 */
@@ -1644,7 +1779,7 @@ function paintComposer(){
     '<div class="pbtn">✕</div>';
 }
 function openComposer(song){
-  var u=user();
+  var u=AUTH.user;
   if(!u){COMM.pending=song||null;toast(T('needSign'));openSign();return}
   COMM.pending=null;
   COMM.song=song||null;
@@ -1654,13 +1789,13 @@ function openComposer(song){
   setTimeout(function(){try{$('#cpText').focus()}catch(e){}},300);
 }
 function postComm(){
-  var u=user();
+  var u=AUTH.user;
   if(!u){toast(T('needSign'));openSign();return}
   var txt=($('#cpText').value||'').trim();
   if(!txt&&!COMM.song){toast(T('cpPh'));return}
   var btn=$('#cpGo');btn.disabled=true;btn.textContent=T('sending');
   commFetch('/community/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    device:u.id,nick:u.nick,text:txt,
+    token:AUTH.token,device:u.uid,nick:u.nick,text:txt,
     song:COMM.song?{id:String(COMM.song.id||''),title:COMM.song.name||'',artist:COMM.song.artist||'',cover:H(COMM.song.cover||''),src:COMM.song.src||'netease'}:null
   })}).then(function(j){
     if(!j.ok)throw new Error(j.error==='too_fast'?T('tooFast'):(j.error||T('net')));
@@ -1678,6 +1813,7 @@ function postComm(){
 /* 绑定 */
 function bindComm(){
   $('#btnComm').addEventListener('click',openComm);
+  $('#btnAcct').addEventListener('click',openSign);
   $('#btnLang').addEventListener('click',toggleLang);
   $('#commClose').addEventListener('click',closeComm);
   $('#comm').addEventListener('click',function(e){if(e.target===$('#comm'))closeComm()});
@@ -1692,13 +1828,12 @@ function bindComm(){
     if(sg){playShared(+sg.getAttribute('data-song'));return}
   });
   $('#sgClose').addEventListener('click',closeSign);
-  $('#sgGo').addEventListener('click',doSign);
+  $('#sgGh').addEventListener('click',ghStart);
   $('#sgWx').addEventListener('click',wxLogin);
-  $('#sgOut').addEventListener('click',function(){
-    try{localStorage.removeItem('fc2_user')}catch(e){}
-    closeSign();renderMe();renderComm();toast(LANG==='en'?'Signed out':'已退出');
-  });
-  $('#sgNick').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doSign()}});
+  $('#sgQq').addEventListener('click',qqLogin);
+  $('#sgCopy').addEventListener('click',copyCode);
+  $('#sgCancel').addEventListener('click',function(){stopPoll();openSign()});
+  $('#sgOut').addEventListener('click',signOut);
   $('#cpClose').addEventListener('click',function(){$('#composer').classList.remove('open')});
   $('#cpGo').addEventListener('click',postComm);
   $('#cpSong').addEventListener('click',function(){COMM.song=null;paintComposer()});
@@ -1707,7 +1842,7 @@ function bindComm(){
   if(code)setTimeout(function(){toast(LANG==='en'?'WeChat code received — the backend still needs an AppID/secret exchange':'已收到微信授权码，还需后端用 AppID/secret 换取身份')},900);
   applyLang();
 }
-bindComm();
+loadAuth();renderAcct();bindComm();verifyToken();
 
 
 /* ---------- 启动 ---------- */
