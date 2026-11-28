@@ -169,7 +169,7 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 
 
 /* 灵动岛 v3：顶部药丸 + 液态玻璃 */
-.island{position:fixed;left:50%;top:calc(6px + env(safe-area-inset-top));transform:translate(-50%,-16px) scale(.94);z-index:60;display:flex;align-items:center;gap:9px;width:min(300px,calc(100vw - 36px));padding:6px 15px 6px 6px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.05));backdrop-filter:blur(30px) saturate(200%);-webkit-backdrop-filter:blur(30px) saturate(200%);border:1px solid rgba(255,255,255,.24);box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.42),inset 0 -10px 20px rgba(255,255,255,.06),0 0 26px var(--glow,rgba(120,160,255,.22));opacity:0;pointer-events:none;transition:opacity .3s,transform .38s cubic-bezier(.22,.61,.36,1)}
+.island{position:fixed;left:50%;top:calc(6px + env(safe-area-inset-top));transform:translate(-50%,-16px) scale(.94);z-index:60;display:flex;align-items:center;gap:9px;width:min(300px,calc(100vw - 36px));padding:6px 15px 6px 6px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06));backdrop-filter:blur(30px) saturate(200%);-webkit-backdrop-filter:blur(30px) saturate(200%);border:1px solid rgba(255,255,255,.24);box-shadow:0 14px 36px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -12px 22px rgba(255,255,255,.08),0 0 30px var(--glow,rgba(120,160,255,.26));opacity:0;pointer-events:none;transition:opacity .3s,transform .38s cubic-bezier(.22,.61,.36,1)}
 .island.show{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
 .island::before{content:"";position:absolute;inset:-60%;background:linear-gradient(112deg,transparent 34%,rgba(255,255,255,.22) 47%,rgba(255,255,255,.05) 55%,transparent 66%);animation:sheen 4.6s linear infinite;pointer-events:none}
 @keyframes sheen{0%{transform:translateX(-45%)}100%{transform:translateX(45%)}}
@@ -216,10 +216,7 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 
 
 @media (max-width:560px){
-  .island{backdrop-filter:blur(14px) saturate(145%);-webkit-backdrop-filter:blur(14px) saturate(145%);box-shadow:0 8px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.34)}
-  .island.playing{animation:none}
-  .island::after{display:none}
-  .island::before{animation-duration:7s;opacity:.5}
+  .island{backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.42),inset 0 -10px 20px rgba(255,255,255,.06),0 0 26px var(--glow,rgba(120,160,255,.28))}
   .np-blobs{filter:blur(28px) saturate(150%)}
   .np-blobs i{opacity:.45}
   .np-bg{filter:blur(34px) saturate(115%)}
