@@ -795,6 +795,7 @@ function loadRec(){
         '<span class="pv"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>'+
         '<b>'+esc(s.name)+'</b><small>'+esc(s.artist)+'</small></div>';
     }).join('')+'</div>';
+    var hint=$('#rsMain');if(hint&&hint.querySelector('.empty'))hint.innerHTML='';
   }).catch(function(){box.innerHTML=''});
 }
 function tintFrom(url){
