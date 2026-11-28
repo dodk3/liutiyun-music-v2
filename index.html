@@ -303,6 +303,14 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 .sgrid .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,#5b8cff,#b28cff);display:grid;place-items:center;font-size:16px;color:#fff;flex:none}
 .sgrid input{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#eef2f8;font-size:13px;outline:none}
 /* 账号登录面板 */
+.prov .pi.lc{background:linear-gradient(140deg,#5b8cff,#8b5bff);font-size:15px}
+.ltabs{display:flex;gap:6px;margin:14px 0 10px}
+.ltab{flex:1;padding:9px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:#9aa3b4;font-size:12.5px;cursor:pointer}
+.ltab.on{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.35)}
+.lfield{width:100%;box-sizing:border-box;margin-top:9px;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#eef2f8;font-size:13px;outline:none;font-family:inherit}
+.lfield:focus{border-color:rgba(255,255,255,.36)}
+.ltgo{width:100%;margin-top:12px;padding:11px;border-radius:12px;border:0;background:#fff;color:#111;font-size:13px;font-weight:600;cursor:pointer}
+.ltgo:disabled{opacity:.6}
 .auth-card{width:min(430px,calc(100vw - 36px))}
 .prov{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#eef2f8;cursor:pointer;text-align:left;box-sizing:border-box}
 .prov:hover{border-color:rgba(255,255,255,.32)}
@@ -513,8 +521,18 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
     <div id="sgPane">
       <button class="prov" id="sgGh"><span class="pi gh">GH</span><span class="pt"><b>GitHub</b><small data-i18n="ghSub">推荐 · 设备码授权，无需备案域名</small></span><span class="pg">›</span></button>
       <button class="prov" id="sgWx"><span class="pi wx">微</span><span class="pt"><b data-i18n="wechat">微信</b><small data-i18n="wxSub">网页授权 · 需 AppID 与备案域名</small></span><span class="pg">›</span></button>
+      <button class="prov" id="sgLocal"><span class="pi lc">@</span><span class="pt"><b data-i18n="localTitle">邮箱账号</b><small data-i18n="localSub">自建账号 · 无需备案域名与资质</small></span><span class="pg">›</span></button>
       <button class="prov" id="sgQq"><span class="pi qq">Q</span><span class="pt"><b>QQ</b><small data-i18n="qqSub">QQ 互联 · 需备案域名与资质</small></span><span class="pg">›</span></button>
       <div class="note" data-i18n="provNote">GitHub 现在就能用；微信、QQ 网页登录需要已认证应用和 ICP 备案的回调域名，配好后点按钮会自动跳转授权。</div>
+    </div>
+
+    <div id="sgLocalBox" style="display:none">
+      <div class="ltabs"><button class="ltab on" id="ltLogin" data-i18n="ltLogin">登录</button><button class="ltab" id="ltReg" data-i18n="ltReg">注册新账号</button></div>
+      <input class="lfield" id="ltMail" type="email" inputmode="email" autocomplete="username" data-i18n-ph="ltMailPh" placeholder="邮箱">
+      <input class="lfield" id="ltPw" type="password" autocomplete="current-password" data-i18n-ph="ltPwPh" placeholder="密码（至少 6 位）">
+      <input class="lfield" id="ltNick" maxlength="16" style="display:none" data-i18n-ph="ltNickPh" placeholder="昵称（可留空）">
+      <button id="ltGo" class="ltgo" data-i18n="ltLogin">登录</button>
+      <div class="dst" id="ltSt"></div>
     </div>
 
     <div id="sgDev" class="dev" style="display:none">
@@ -1499,6 +1517,10 @@ var DICT={
     provNote:'GitHub 现在就能用；微信、QQ 网页登录需要已认证应用和 ICP 备案的回调域名，配好后点按钮会自动跳转授权。',
     devStep:'在浏览器打开', devStep2:'并输入下面的代码', devWait:'等待授权…', devExpired:'代码已失效，请点 GitHub 重新获取',
     copy:'复制代码', copied:'已复制', cancel:'取消', authFail:'登录未完成，请重试',
+    localTitle:'邮箱账号', localSub:'自建账号 · 无需备案域名与资质',
+    ltLogin:'登录', ltReg:'注册新账号', ltMailPh:'邮箱', ltPwPh:'密码（至少 6 位）', ltNickPh:'昵称（可留空）',
+    ltExists:'这个邮箱已注册，直接登录即可', ltNoUser:'该邮箱还没注册，切到「注册新账号」',
+    ltBadPw:'密码不对，再试一次', ltBadMail:'邮箱格式不对', ltFail:'登录失败，请重试',
     qqNeed:'QQ 登录还没配置：QQ 互联要求 ICP 备案域名和企业/个人资质，github.io 不能作为回调域名',
     wxNote:'微信登录需要公众号 AppID 和已备案的回调域名，配置后点这里会自动跳转授权。',
     wxNeed:'微信登录还没配置：需要公众号 AppID + 已备案的网页授权域名（github.io 不能作为回调域名）',
@@ -1526,6 +1548,10 @@ var DICT={
     provNote:'GitHub works right now. WeChat and QQ web sign-in need a verified app and an ICP-filed callback domain; once configured these buttons redirect automatically.',
     devStep:'Open', devStep2:'in a browser and enter this code', devWait:'Waiting for authorization…', devExpired:'Code expired — tap GitHub to get a new one',
     copy:'Copy code', copied:'Copied', cancel:'Cancel', authFail:'Sign-in did not complete — please try again',
+    localTitle:'Email account', localSub:'Built-in account · no filed domain or credentials needed',
+    ltLogin:'Sign in', ltReg:'Create account', ltMailPh:'Email', ltPwPh:'Password (6+ characters)', ltNickPh:'Nickname (optional)',
+    ltExists:'This email is already registered — just sign in', ltNoUser:'No account for this email — switch to Create account',
+    ltBadPw:'Wrong password, try again', ltBadMail:'That email looks invalid', ltFail:'Sign-in failed, try again',
     qqNeed:'QQ sign-in is not configured yet: QQ Connect requires an ICP-filed domain plus business/personal credentials — github.io cannot be a callback domain.',
     wxNote:'WeChat sign-in needs an official-account AppID on an ICP-filed callback domain. Once configured, this button redirects automatically.',
     wxNeed:'WeChat sign-in is not configured yet: it needs an official-account AppID and an ICP-filed OAuth domain (github.io cannot be a callback domain).',
@@ -1709,6 +1735,47 @@ function openSign(){
 }
 function closeSign(){stopPoll();$('#signin').classList.remove('open')}
 function stopPoll(){if(AUTH.timer){clearInterval(AUTH.timer);AUTH.timer=null}}
+var LT={mode:'login'};
+function openLocal(){
+  $('#sgPane').style.display='none';
+  $('#sgAccount').style.display='none';
+  $('#sgOut').style.display='none';
+  $('#sgDev').style.display='none';
+  $('#sgLocalBox').style.display='';
+  $('#ltSt').textContent='';
+  setLT('login');
+  setTimeout(function(){try{$('#ltMail').focus()}catch(e){}},200);
+}
+function setLT(m){
+  LT.mode=m;
+  var isReg=m==='reg';
+  $('#ltReg').classList.toggle('on',isReg);
+  $('#ltLogin').classList.toggle('on',!isReg);
+  $('#ltNick').style.display=isReg?'':'none';
+  $('#ltGo').textContent=T(isReg?'ltReg':'ltLogin');
+  $('#ltPw').setAttribute('autocomplete',isReg?'new-password':'current-password');
+}
+function ltSubmit(){
+  var mail=($('#ltMail').value||'').trim();
+  var pw=($('#ltPw').value||'');
+  var nick=($('#ltNick').value||'').trim();
+  if(!mail||mail.indexOf('@')<0){toast(T('ltMailPh'));return}
+  if(pw.length<6){toast(T('ltPwPh'));return}
+  var btn=$('#ltGo');btn.disabled=true;$('#ltSt').textContent=T('loading')+'…';
+  var path=LT.mode==='reg'?'/auth/local/register':'/auth/local/login';
+  authApi(path,{email:mail,password:pw,nick:nick}).then(function(j){
+    if(j&&j.ok&&j.token){
+      AUTH.token=j.token;AUTH.user=j.user;AUTH.cfg=null;saveAuth();
+      closeSign();renderAcct();renderMe();renderComm();
+      toast(T('welcome')+'，'+(j.user&&j.user.nick||''));
+      if(COMM.pending){var s0=COMM.pending;COMM.pending=null;setTimeout(function(){openComposer(s0)},260)}
+    }else{
+      var e=(j&&j.error)||'';
+      var map={'email_exists':T('ltExists'),'no_user':T('ltNoUser'),'bad_password':T('ltBadPw'),'bad_email':T('ltBadMail')};
+      $('#ltSt').textContent=map[e]||T('ltFail');
+    }
+  }).catch(function(){$('#ltSt').textContent=T('net')}).then(function(){btn.disabled=false});
+}
 function getCfg(){
   if(AUTH.cfg)return Promise.resolve(AUTH.cfg);
   return authApi('/app/config',null,'GET').then(function(j){AUTH.cfg=j;return j});
@@ -1869,6 +1936,11 @@ function bindComm(){
   $('#sgClose').addEventListener('click',closeSign);
   $('#sgGh').addEventListener('click',function(){activeProvider('github')});
   $('#sgWx').addEventListener('click',function(){activeProvider('wechat')});
+  $('#sgLocal').addEventListener('click',openLocal);
+  $('#ltLogin').addEventListener('click',function(){setLT('login')});
+  $('#ltReg').addEventListener('click',function(){setLT('reg')});
+  $('#ltGo').addEventListener('click',ltSubmit);
+  $('#ltPw').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();ltSubmit()}});
   $('#sgQq').addEventListener('click',function(){activeProvider('qq')});
   $('#sgCopy').addEventListener('click',copyCode);
   $('#sgCancel').addEventListener('click',function(){stopPoll();openSign()});
