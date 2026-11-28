@@ -303,6 +303,10 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 .sgrid .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,#5b8cff,#b28cff);display:grid;place-items:center;font-size:16px;color:#fff;flex:none}
 .sgrid input{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#eef2f8;font-size:13px;outline:none}
 /* 账号登录面板 */
+.prov .pi.qr{background:#20242c;border:1px solid #3a414b;font-size:13px}
+.qrimg{display:grid;place-items:center;margin-top:14px}
+.qrimg img{width:196px;height:196px;border-radius:14px;background:#fff;padding:8px;display:block}
+.dbtn.on{background:#fff;border-color:#fff;color:#111;font-weight:600}
 .prov .pi.lc{background:linear-gradient(140deg,#5b8cff,#8b5bff);font-size:15px}
 .ltabs{display:flex;gap:6px;margin:14px 0 10px}
 .ltab{flex:1;padding:9px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:#9aa3b4;font-size:12.5px;cursor:pointer}
@@ -520,10 +524,24 @@ body.island-on .top{padding-top:calc(56px + env(safe-area-inset-top))}
 
     <div id="sgPane">
       <button class="prov" id="sgGh"><span class="pi gh">GH</span><span class="pt"><b>GitHub</b><small data-i18n="ghSub">推荐 · 设备码授权，无需备案域名</small></span><span class="pg">›</span></button>
+      <button class="prov" id="sgQr"><span class="pi qr">码</span><span class="pt"><b data-i18n="qrTitle">扫码登录</b><small data-i18n="qrSub">手机扫码后确认，不依赖任何第三方资质</small></span><span class="pg">›</span></button>
       <button class="prov" id="sgWx"><span class="pi wx">微</span><span class="pt"><b data-i18n="wechat">微信</b><small data-i18n="wxSub">网页授权 · 需 AppID 与备案域名</small></span><span class="pg">›</span></button>
       <button class="prov" id="sgLocal"><span class="pi lc">@</span><span class="pt"><b data-i18n="localTitle">邮箱账号</b><small data-i18n="localSub">自建账号 · 无需备案域名与资质</small></span><span class="pg">›</span></button>
       <button class="prov" id="sgQq"><span class="pi qq">Q</span><span class="pt"><b>QQ</b><small data-i18n="qqSub">QQ 互联 · 需备案域名与资质</small></span><span class="pg">›</span></button>
       <div class="note" data-i18n="provNote">GitHub 现在就能用；微信、QQ 网页登录需要已认证应用和 ICP 备案的回调域名，配好后点按钮会自动跳转授权。</div>
+    </div>
+
+    <div id="sgQrView" style="display:none">
+      <div class="qrimg"><img id="qrImg" alt="QR"></div>
+      <p class="dstep" style="text-align:center;margin:12px 0 0" data-i18n="qrHint">手机扫码打开后登录，再点「确认登录」</p>
+      <div class="dst" id="qrSt">等待扫码…</div>
+      <div class="dacts"><button class="dbtn" id="qrNew" data-i18n="qrRefresh">换一张</button></div>
+    </div>
+
+    <div id="sgQrConfirm" style="display:none">
+      <div class="acct" style="margin:6px 0 0"><div class="sa-av" id="qrAv">谊</div><div class="sa-meta"><b id="qrWho">—</b><small data-i18n="qrConfirmWho">即将在这台设备登录</small></div></div>
+      <p class="dstep" style="margin-top:14px" data-i18n="qrConfirmHint">确认在这台设备登录流体云？</p>
+      <div class="dacts"><button class="dbtn on" id="qrOk" data-i18n="qrConfirm">确认登录</button><button class="dbtn" id="qrNo" data-i18n="cancel">取消</button></div>
     </div>
 
     <div id="sgLocalBox" style="display:none">
@@ -1517,6 +1535,10 @@ var DICT={
     provNote:'GitHub 现在就能用；微信、QQ 网页登录需要已认证应用和 ICP 备案的回调域名，配好后点按钮会自动跳转授权。',
     devStep:'在浏览器打开', devStep2:'并输入下面的代码', devWait:'等待授权…', devExpired:'代码已失效，请点 GitHub 重新获取',
     copy:'复制代码', copied:'已复制', cancel:'取消', authFail:'登录未完成，请重试',
+    qrTitle:'扫码登录', qrSub:'手机扫码后确认，不依赖任何第三方资质',
+    qrHint:'手机扫码打开后登录，再点「确认登录」', qrWait:'等待扫码…', qrExpired:'二维码已过期，点「换一张」',
+    qrRefresh:'换一张', qrConfirm:'确认登录', qrConfirmHint:'确认在这台设备登录流体云？', qrConfirmWho:'即将在这台设备登录',
+    qrDone:'已确认，这台设备马上登录', qrScanNeed:'扫码后请先登录账号，再确认登录',
     localTitle:'邮箱账号', localSub:'自建账号 · 无需备案域名与资质',
     ltLogin:'登录', ltReg:'注册新账号', ltMailPh:'邮箱', ltPwPh:'密码（至少 6 位）', ltNickPh:'昵称（可留空）',
     ltExists:'这个邮箱已注册，直接登录即可', ltNoUser:'该邮箱还没注册，切到「注册新账号」',
@@ -1548,6 +1570,10 @@ var DICT={
     provNote:'GitHub works right now. WeChat and QQ web sign-in need a verified app and an ICP-filed callback domain; once configured these buttons redirect automatically.',
     devStep:'Open', devStep2:'in a browser and enter this code', devWait:'Waiting for authorization…', devExpired:'Code expired — tap GitHub to get a new one',
     copy:'Copy code', copied:'Copied', cancel:'Cancel', authFail:'Sign-in did not complete — please try again',
+    qrTitle:'Scan to sign in', qrSub:'Scan with your phone and confirm — no third-party credentials',
+    qrHint:'Open the link on your phone, sign in, then tap Confirm', qrWait:'Waiting for scan…', qrExpired:'QR expired — tap to refresh',
+    qrRefresh:'New code', qrConfirm:'Confirm sign-in', qrConfirmHint:'Sign in on this device?', qrConfirmWho:'This device will sign in as',
+    qrDone:'Confirmed — this device is signing in', qrScanNeed:'Sign in on the phone first, then confirm',
     localTitle:'Email account', localSub:'Built-in account · no filed domain or credentials needed',
     ltLogin:'Sign in', ltReg:'Create account', ltMailPh:'Email', ltPwPh:'Password (6+ characters)', ltNickPh:'Nickname (optional)',
     ltExists:'This email is already registered — just sign in', ltNoUser:'No account for this email — switch to Create account',
@@ -1722,6 +1748,7 @@ function playShared(i){
 function openSign(){
   stopPoll();AUTH.step='pane';
   var u=AUTH.user;
+  hideAllViews();
   $('#sgPane').style.display=u?'none':'';
   $('#sgAccount').style.display=u?'flex':'none';
   $('#sgDev').style.display='none';
@@ -1736,6 +1763,77 @@ function openSign(){
 function closeSign(){stopPoll();$('#signin').classList.remove('open')}
 function stopPoll(){if(AUTH.timer){clearInterval(AUTH.timer);AUTH.timer=null}}
 var LT={mode:'login'};
+var QR={ticket:'',timer:null,pending:''};
+function qrUrl(t){return location.origin+location.pathname+'#qr='+t}
+function hideAllViews(){
+  ['#sgPane','#sgAccount','#sgDev','#sgLocalBox','#sgQrView','#sgQrConfirm'].forEach(function(sel){
+    var el=$(sel);if(el)el.style.display='none';
+  });
+}
+function openQrView(){
+  stopPoll();hideAllViews();
+  $('#sgOut').style.display='none';
+  $('#sgQrView').style.display='';
+  qrRefresh();
+}
+function qrRefresh(){
+  if(QR.timer){clearInterval(QR.timer);QR.timer=null}
+  QR.ticket='';
+  $('#qrSt').textContent=T('qrWait');
+  authApi('/auth/qr/new',{}).then(function(j){
+    if(!j.ok||!j.ticket)throw new Error('qr');
+    QR.ticket=j.ticket;
+    $('#qrImg').src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data='+encodeURIComponent(qrUrl(j.ticket));
+    if(QR.timer)clearInterval(QR.timer);
+    QR.timer=setInterval(qrPoll,2500);
+  }).catch(function(){$('#qrSt').textContent=T('net')});
+}
+function qrPoll(){
+  if(!QR.ticket)return;
+  authApi('/auth/qr/poll?ticket='+encodeURIComponent(QR.ticket),null,'GET').then(function(j){
+    if(j&&j.status==='ok'&&j.token){
+      if(QR.timer){clearInterval(QR.timer);QR.timer=null}
+      AUTH.token=j.token;AUTH.user=j.user;AUTH.cfg=null;saveAuth();
+      closeSign();renderAcct();renderMe();renderComm();
+      toast(T('welcome')+'，'+(j.user&&j.user.nick||''));
+    }else if(j&&j.status==='expired'){
+      if(QR.timer){clearInterval(QR.timer);QR.timer=null}
+      $('#qrSt').textContent=T('qrExpired');
+    }
+  }).catch(function(){});
+}
+function consumeQR(){
+  var m=String(location.hash||'').match(/[#&]qr=([^&]+)/);
+  if(!m)return;
+  QR.pending=decodeURIComponent(m[1]);
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  if(AUTH.user){showQrConfirm()}else{openSign();toast(T('qrScanNeed'))}
+}
+function showQrConfirm(){
+  hideAllViews();
+  $('#sgOut').style.display='none';
+  $('#sgQrConfirm').style.display='';
+  $('#signin').classList.add('open');
+  var u=AUTH.user||{};
+  $('#qrWho').textContent=u.nick||'';
+  $('#qrAv').innerHTML=u.avatar?'<img src="'+esc(H(u.avatar))+'" alt="">':esc((u.nick||'谊').slice(0,1));
+}
+function approveQR(){
+  if(!QR.pending||!AUTH.token){toast(T('net'));return}
+  authApi('/auth/qr/approve',{ticket:QR.pending,token:AUTH.token}).then(function(j){
+    if(j&&j.ok){
+      $('#sgQrConfirm').style.display='none';QR.pending='';
+      toast(T('qrDone'));
+      setTimeout(function(){try{$('#sgClose').click()}catch(e){}},700);
+    }else{
+      toast(j&&j.error==='expired'?T('qrExpired'):T('net'));
+    }
+  }).catch(function(){toast(T('net'))});
+}
+function afterAuthQR(){
+  if(QR.pending){showQrConfirm();return true}
+  return false;
+}
 function openLocal(){
   $('#sgPane').style.display='none';
   $('#sgAccount').style.display='none';
@@ -1768,6 +1866,7 @@ function ltSubmit(){
       AUTH.token=j.token;AUTH.user=j.user;AUTH.cfg=null;saveAuth();
       closeSign();renderAcct();renderMe();renderComm();
       toast(T('welcome')+'，'+(j.user&&j.user.nick||''));
+      if(afterAuthQR())return;
       if(COMM.pending){var s0=COMM.pending;COMM.pending=null;setTimeout(function(){openComposer(s0)},260)}
     }else{
       var e=(j&&j.error)||'';
@@ -1804,6 +1903,7 @@ function consumeReturn(){
       if(j&&j.ok&&j.user){
         AUTH.user=j.user;saveAuth();renderAcct();renderMe();renderComm();
         toast(T('welcome')+'，'+(AUTH.user.nick||''));
+        if(afterAuthQR())return;
       }else{
         clearAuth();renderAcct();renderMe();
         toast(T('net'));
@@ -1840,6 +1940,7 @@ function ghPoll(){
       AUTH.token=j.token;AUTH.user=j.user;AUTH.dc='';AUTH.step='done';
       saveAuth();stopPoll();closeSign();renderAcct();renderMe();renderComm();
       toast(T('welcome')+'，'+(AUTH.user?AUTH.user.nick:''));
+      if(afterAuthQR())return;
       if(COMM.pending){var s0=COMM.pending;COMM.pending=null;setTimeout(function(){openComposer(s0)},260)}
       return;
     }
@@ -1936,6 +2037,10 @@ function bindComm(){
   $('#sgClose').addEventListener('click',closeSign);
   $('#sgGh').addEventListener('click',function(){activeProvider('github')});
   $('#sgWx').addEventListener('click',function(){activeProvider('wechat')});
+  $('#sgQr').addEventListener('click',openQrView);
+  $('#qrNew').addEventListener('click',qrRefresh);
+  $('#qrOk').addEventListener('click',approveQR);
+  $('#qrNo').addEventListener('click',function(){QR.pending='';closeSign()});
   $('#sgLocal').addEventListener('click',openLocal);
   $('#ltLogin').addEventListener('click',function(){setLT('login')});
   $('#ltReg').addEventListener('click',function(){setLT('reg')});
@@ -1953,7 +2058,7 @@ function bindComm(){
   if(code)setTimeout(function(){toast(LANG==='en'?'WeChat code received — the backend still needs an AppID/secret exchange':'已收到微信授权码，还需后端用 AppID/secret 换取身份')},900);
   applyLang();
 }
-loadAuth();consumeReturn();renderAcct();bindComm();verifyToken();
+loadAuth();consumeReturn();consumeQR();renderAcct();bindComm();verifyToken();
 
 
 /* ---------- 启动 ---------- */
